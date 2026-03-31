@@ -45,28 +45,28 @@ router.post('/crear', upload.single('image'), async (req, res) => {
     }
 });
 
-// 3. AGREGAR COMENTARIO + NOTIFICACIÓN
+// ... (tota la part inicial de multer i get queda IGUAL)
+
+// 3. AGREGAR COMENTARIO (Actualizado con Notificación)
 router.post('/:id/comentar', async (req, res) => {
     const post_id = req.params.id;
     const { user_id, username, content } = req.body;
 
     try {
-        // Insertar el comentario
+        // Insertamos el comentario (esto ya lo tenías)
         await db.query(
             'INSERT INTO comments (post_id, user_id, username, content) VALUES (?, ?, ?, ?)', 
             [post_id, user_id, username, content]
         );
 
-        // --- LÓGICA DE NOTIFICACIÓN ---
-        // 1. Buscamos quién es el dueño del post
+        // --- NOTIFICACIÓN: Buscamos al dueño del post ---
         const [post] = await db.query('SELECT user_id FROM posts WHERE id = ?', [post_id]);
-        const idReceptor = post[0].user_id;
-
-        // 2. Notificamos al dueño (si no es el mismo que comenta)
-        if (idReceptor != user_id) {
+        
+        // Notificamos si el dueño no es el mismo que comenta
+        if (post.length > 0 && post[0].user_id != user_id) {
             await db.query(
                 'INSERT INTO notificaciones (id_receptor, id_emisor, tipo, id_referencia) VALUES (?, ?, ?, ?)',
-                [idReceptor, user_id, 'comment', post_id]
+                [post[0].user_id, user_id, 'comment', post_id]
             );
         }
 
@@ -76,18 +76,7 @@ router.post('/:id/comentar', async (req, res) => {
     }
 });
 
-// 4. OBTENER COMENTARIOS
-router.get('/:id/comentarios', async (req, res) => {
-    const post_id = req.params.id;
-    try {
-        const [rows] = await db.query('SELECT * FROM comments WHERE post_id = ? ORDER BY created_at ASC', [post_id]);
-        res.json(rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// 5. DAR O QUITAR LIKE + NOTIFICACIÓN
+// 5. DAR O QUITAR LIKE (Actualizado con Notificación)
 router.post('/:id/like', async (req, res) => {
     const postId = req.params.id;
     const { user_id } = req.body;
@@ -103,7 +92,7 @@ router.post('/:id/like', async (req, res) => {
             await db.query('DELETE FROM post_likes WHERE user_id = ? AND post_id = ?', [user_id, postId]);
             await db.query('UPDATE posts SET likes = likes - 1 WHERE id = ?', [postId]);
             
-            // Opcional: Borrar la notificación de ese like si quieres limpiar la DB
+            // Borramos la notificación si quitan el like
             await db.query('DELETE FROM notificaciones WHERE id_emisor = ? AND id_referencia = ? AND tipo = "like"', [user_id, postId]);
             
             res.json({ success: true, action: 'removed' });
@@ -112,14 +101,12 @@ router.post('/:id/like', async (req, res) => {
             await db.query('INSERT INTO post_likes (user_id, post_id) VALUES (?, ?)', [user_id, postId]);
             await db.query('UPDATE posts SET likes = likes + 1 WHERE id = ?', [postId]);
 
-            // --- LÓGICA DE NOTIFICACIÓN ---
+            // --- NOTIFICACIÓN: Buscamos al dueño del post ---
             const [post] = await db.query('SELECT user_id FROM posts WHERE id = ?', [postId]);
-            const idReceptor = post[0].user_id;
-
-            if (idReceptor != user_id) {
+            if (post.length > 0 && post[0].user_id != user_id) {
                 await db.query(
                     'INSERT INTO notificaciones (id_receptor, id_emisor, tipo, id_referencia) VALUES (?, ?, ?, ?)',
-                    [idReceptor, user_id, 'like', postId]
+                    [post[0].user_id, user_id, 'like', postId]
                 );
             }
 
@@ -127,6 +114,22 @@ router.post('/:id/like', async (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// OBTENER COMENTARIOS DE UN POST ESPECÍFICO
+router.get('/:id/comentarios', async (req, res) => {
+    const postId = req.params.id;
+    try {
+        // Asegúrate de que el nombre de la tabla sea 'comments' como en tu ruta de POST
+        const sql = 'SELECT * FROM comments WHERE post_id = ? ORDER BY created_at DESC';
+        const [rows] = await db.query(sql, [postId]);
+        
+        // Enviamos los comentarios encontrados (o un array vacío si no hay)
+        res.json(rows);
+    } catch (error) {
+        console.error("Error al obtener comentarios:", error);
+        res.status(500).json({ error: "Error al cargar los comentarios" });
     }
 });
 

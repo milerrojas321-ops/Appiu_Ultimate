@@ -354,11 +354,11 @@
                     const claseLikeIcon = post.loLikeo > 0 ? "fa-solid active-like" : "fa-regular";
 
                     feed.innerHTML += `
-                        <article class="post-card" id="post-${post.id}">
-                            <div class="post-header">
-                                <img src="${fotoAutor}" class="user-pfp" alt="${post.username}">
-                                <div>
-                                    <b style="font-size:0.95rem; color:var(--text);">${post.username}</b>
+                    <article class="post-card" id="post-${post.id}">
+                        <div class="post-header" onclick="verPerfil(${post.user_id})" style="cursor:pointer;">
+                            <img src="${fotoAutor}" class="user-pfp" alt="${post.username}">
+                            <div>
+                                <b style="font-size:0.95rem; color:var(--text);">${post.username}</b>
                                     <small style="color:var(--text-light); display:block; font-size:0.75rem; margin-top:2px;">${new Date(post.created_at).toLocaleDateString()}</small>
                                 </div>
                             </div>
@@ -389,29 +389,33 @@
             } catch (e) { console.error(e); }
         }
 
+        function verPerfil(userId) {
+            // Si el ID de la publicación es el mismo que el del usuario logueado
+            if(userId === user.id) {
+                window.location.href = "perfil.html"; // Va a tu propio perfil
+            } else {
+                window.location.href = `perfil-usuario.html?id=${userId}`; // Va al perfil del otro
+            }
+        }
+
         async function cargarSugerencias() {
             const lista = document.getElementById("lista-sugerencias");
             try {
                 const res = await fetch(`/api/usuarios/sugerencias/${user.id}`); 
                 const usuarios = await res.json();
-                
                 lista.innerHTML = ""; 
 
-                if(usuarios.length === 0) {
-                    lista.innerHTML = `<p style="text-align:center; color:#ccc; font-size:0.8rem; padding:10px;">No hay sugerencias por ahora.</p>`;
-                    return;
-                }
-
                 usuarios.forEach(u => {
-                    const imagen = u.foto_perfil ? u.foto_perfil : `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`;
+                    const imagen = u.foto_perfil || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`;
                     const textoBoton = u.loSigo > 0 ? "Siguiendo" : "Seguir";
                     const claseBoton = u.loSigo > 0 ? "btn-followed" : "";
 
+                    // ESTRUCTURA CORREGIDA AQUÍ
                     lista.innerHTML += `
                         <div class="user-suggest">
-                            <div class="user-suggest-info">
+                            <div class="user-suggest-info" onclick="verPerfil(${u.id})">
                                 <img src="${imagen}" alt="${u.username}">
-                                <b style="font-size:0.85rem; color:var(--text);">${u.username}</b>
+                                <b>${u.username}</b>
                             </div>
                             <button class="btn-follow ${claseBoton}" onclick="followUser(event, ${u.id})">
                                 ${textoBoton}
@@ -419,41 +423,56 @@
                         </div>
                     `;
                 });
-            } catch (e) {
-                console.error("Error:", e);
-                lista.innerHTML = "<p>Error al cargar usuarios</p>";
-            }
-        }        
+            } catch (e) { console.error(e); }
+        } 
+        
 
+
+        // 1. Esta función abre el panel visual
         async function abrirComentarios(postId) {
             currentPostId = postId;
             document.getElementById('commentsPanel').classList.add('active');
+            // Luego llama a la función que trae los datos
             cargarComentarios(postId);
         }
 
+        // 2. Esta función trae los datos del servidor (Versión mejorada)
         async function cargarComentarios(postId) {
             const list = document.getElementById('commentsList');
             list.innerHTML = `<div style="text-align:center; color:var(--primary); padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i></div>`;
-            const res = await fetch(`/api/publicaciones/${postId}/comentarios`);
-            const comments = await res.json();
-            list.innerHTML = "";
             
-            if(comments.length === 0) {
-                list.innerHTML = `<p style="text-align:center; color:#888; font-size:0.9rem; margin-top:30px;">Aún no hay comentarios. <br> ¡Sé el primero en opinar!</p>`;
-                return;
-            }
+            try {
+                const res = await fetch(`/api/publicaciones/${postId}/comentarios`);
+                
+                if (!res.ok) {
+                    console.error("Error 404: La ruta no existe en el servidor");
+                    list.innerHTML = `<p style="text-align:center; color:red;">Error: No se encontró la ruta /api/publicaciones/${postId}/comentarios</p>`;
+                    return;
+                }
 
-            comments.forEach(c => {
-                const fotoCmt = `https://api.dicebear.com/7.x/bottts/svg?seed=${c.username}`;
-                list.innerHTML += `
-                    <div class="comment-item">
-                        <img src="${fotoCmt}" class="comment-pfp">
-                        <div class="comment-content">
-                            <b style="font-size:0.8rem; color:var(--primary); display:block; margin-bottom:2px;">${c.username}</b>
-                            <p style="font-size:0.85rem; color:var(--text); line-height:1.4;">${c.texto}</p>
-                        </div>
-                    </div>`;
-            });
+                const comments = await res.json();
+                list.innerHTML = "";
+                
+                if(!comments || comments.length === 0) {
+                    list.innerHTML = `<p style="text-align:center; color:#888; font-size:0.9rem; margin-top:30px;">Aún no hay comentarios. <br> ¡Sé el primero en opinar!</p>`;
+                    return;
+                }
+
+                comments.forEach(c => {
+                    const fotoCmt = `https://api.dicebear.com/7.x/bottts/svg?seed=${c.username || 'anon'}`;
+                    list.innerHTML += `
+                        <div class="comment-item">
+                            <img src="${fotoCmt}" class="comment-pfp">
+                            <div class="comment-content">
+                                <b style="font-size:0.8rem; color:var(--primary); display:block; margin-bottom:2px;">${c.username || 'Anónimo'}</b>
+                                <p style="font-size:0.85rem; color:var(--text); line-height:1.4;">${c.texto || c.contenido}</p>
+                            </div>
+                        </div>`;
+                });
+            } catch (error) {
+                console.error("Error al parsear JSON:", error);
+                list.innerHTML = `<p style="text-align:center; color:red;">Error al cargar comentarios.</p>`;
+            }
         }
 
         document.getElementById('form-comentario').addEventListener('submit', async (e) => {
@@ -591,6 +610,15 @@
                     }
                 }
             } catch (e) { console.error("Error:", e); }
+        }
+
+        function verPerfil(userId) {
+            if(!user || !userId) return;
+            if(userId === user.id) {
+                window.location.href = "perfil.html";
+            } else {
+                window.location.href = `perfil-usuario.html?id=${userId}`;
+            }
         }
 
     </script>
