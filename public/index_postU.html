@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro Appiu - Comunidad Botánica</title>
+  <style>
+    /* Tu estilo base mantenido y mejorado */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #f0f4f1; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .container { background: #ffffff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
+    h1 { text-align: center; font-size: 26px; color: #2d5a27; margin-bottom: 25px; }
+    label { display: block; margin-bottom: 12px; color: #444; font-weight: 600; font-size: 14px; }
+    input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 15px; background: #fafafa; transition: 0.3s; }
+    input:focus, textarea:focus { border-color: #4caf50; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1); }
+    textarea { resize: none; height: 80px; }
+    button { width: 100%; padding: 14px; border: none; border-radius: 10px; background-color: #4caf50; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s; }
+    button:hover { background-color: #388e3c; transform: translateY(-2px); }
+    .alert { margin-top: 20px; padding: 12px; border-radius: 10px; text-align: center; font-size: 14px; display: none; }
+    .success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    .error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Únete a Appiu</h1>
+    <form id="formUsuario">
+      <label>Nombre de usuario
+        <input type="text" id="username" placeholder="Ej: MilerPlantas" required>
+      </label>
+      
+      <label>Correo electrónico
+        <input type="email" id="email" placeholder="correo@ejemplo.com" required>
+      </label>
+
+      <label>Contraseña
+        <input type="password" id="password" placeholder="Mínimo 6 caracteres" required>
+      </label>
+
+      <label>¿Eres experto? (Opcional)
+        <textarea id="expert_bio" placeholder="Cuéntanos tu experiencia con las plantas para verificarte..."></textarea>
+      </label>
+
+      <button type="submit">Crear Cuenta</button>
+      <div id="alert" class="alert"></div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById("formUsuario");
+    const alertBox = document.getElementById("alert");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Recolectamos los datos asegurándonos que coincidan con la BD
+      const nuevoUsuario = {
+        username: document.getElementById("username").value,
+        email: document.getElementById("email").value, // Asegúrate de que tu ruta en Node lea 'email'
+        password: document.getElementById("password").value,
+        expert_bio: document.getElementById("expert_bio").value
+      };
+
+      try {
+        // La URL debe ser /auth/registro porque así lo definimos en server.js
+        const res = await fetch("/auth/registro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(nuevoUsuario)
+        });
+
+        const data = await res.json();
+
+        if(res.ok) {
+          alertBox.textContent = "¡Registro exitoso! Ya estás en la base de datos de Appiu.";
+          alertBox.className = "alert success";
+          alertBox.style.display = "block";
+          form.reset();
+        } else {
+          alertBox.textContent = "Error: " + (data.message || "No se pudo registrar");
+          alertBox.className = "alert error";
+          alertBox.style.display = "block";
+        }
+      } catch(err) {
+        alertBox.textContent = "Error de conexión con el servidor";
+        alertBox.className = "alert error";
+        alertBox.style.display = "block";
+      }
+    });
+
+    // Función para Likes conectada a la nueva tabla de la BD
+    async function darLike(postId, userId) {
+        try {
+            const res = await fetch(`/auth/publicaciones/${postId}/like`, { // Ajustado el prefijo si usas /auth
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: userId })
+            });
+            const data = await res.json();
+            alert(data.message);
+        } catch (error) {
+            console.error("Error al dar like:", error);
+        }
+    }
+  </script>
+</body>
+</html>

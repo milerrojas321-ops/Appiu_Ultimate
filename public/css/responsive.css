@@ -1,0 +1,120 @@
+/* public/css/responsive.css */
+
+/* 1. AJUSTES GENERALES PARA MÓVILES (Pantallas menores a 768px) */
+@media (max-width: 768px) {
+    
+    /* Centrado de publicaciones en el Feed */
+    main {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        padding: 10px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Esto centra las publicaciones */
+    }
+
+    .feed-container {
+        width: 100%;
+        max-width: 500px; /* Evita que la publicación sea demasiado ancha en móviles grandes */
+    }
+
+    .post-card {
+        width: 100%;
+        margin-bottom: 20px;
+        border-radius: 15px; /* Bordes más suaves para móvil */
+    }
+
+    /* Ocultar paneles laterales que no caben */
+    .right-panel {
+        display: none !important;
+    }
+
+    /* 2. MENÚ HAMBURGUESA Y SIDEBAR */
+    .sidebar {
+        left: -100%; /* Escondido a la izquierda */
+        top: 60px;
+        height: calc(100vh - 60px);
+        width: 280px;
+        position: fixed;
+        transition: 0.4s ease-in-out;
+        z-index: 2000;
+        box-shadow: 10px 0 20px rgba(0,0,0,0.1);
+    }
+
+    .sidebar.active {
+        left: 0; /* Se muestra al activar la clase con JS */
+    }
+
+    .mobile-header {
+        display: flex !important; /* Aparece solo en móvil */
+        height: 60px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        background: white;
+        border-bottom: 1px solid #eee;
+        position: sticky;
+        top: 0;
+        z-index: 2001;
+    }
+
+    /* 3. FORMULARIOS (Login y Registro) */
+    .login-container, .form-box {
+        width: 90% !important;
+        max-width: 400px;
+        padding: 20px !important;
+    }
+
+    input[type="text"], 
+    input[type="password"], 
+    input[type="email"], 
+    textarea {
+        font-size: 16px !important; /* Evita el zoom automático en iPhone */
+        width: 100%;
+    }
+
+    /* 4. MODAL DE DETALLES (Tarjeta Grande) */
+    .modal-content {
+        width: 95% !important;
+        flex-direction: column !important; /* Foto arriba, info abajo */
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-left, .modal-right {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+
+    .modal-left {
+        height: 200px;
+    }
+
+    .modal-right {
+        padding: 20px !important;
+    }
+
+    /* 5. EXPLORAR PLANTAS (Grid) */
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+        gap: 15px !important;
+        padding: 15px !important;
+    }
+
+    .search-box input {
+        width: 90% !important;
+    }
+}
+
+/* 6. AJUSTES PARA TABLETS (Entre 769px y 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    main {
+        margin-right: 0 !important; /* Quita el espacio del panel derecho */
+        width: calc(100% - var(--sidebar-width));
+    }
+
+    .right-panel {
+        display: none;
+    }
+}

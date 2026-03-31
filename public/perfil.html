@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil | Appiu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    <style>
+        :root {
+            --primary: #1a4d2e;
+            --accent: #ff4d94;
+            --bg: #ffffff;
+            --gray-bg: #fafafa;
+            --text: #0d2117;
+            --border: #dbdbdb;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); }
+
+        /* HEADER DE NAVEGACIÓN */
+        header {
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .logo span { color: var(--accent); }
+        .nav-icons { display: flex; gap: 20px; font-size: 1.2rem; }
+        .nav-icons a { color: var(--text); text-decoration: none; transition: 0.3s; }
+        .nav-icons a:hover { color: var(--primary); }
+
+        /* SECCIÓN DE PERFIL */
+        .profile-container {
+            max-width: 935px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 80px;
+            margin-bottom: 44px;
+            padding-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 2px solid #dbdbdb;
+            padding: 5px;
+            object-fit: cover;
+        }
+
+        .profile-info h2 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            display: inline-block;
+            margin-right: 20px;
+        }
+
+        .btn-edit {
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .stats {
+            display: flex;
+            gap: 40px;
+            margin: 20px 0;
+            list-style: none;
+        }
+        .stats li { font-size: 1rem; }
+        .stats b { font-weight: 600; }
+
+        .bio { font-size: 1rem; line-height: 1.5; }
+        .bio b { display: block; margin-bottom: 5px; }
+
+        /* GRID DE PUBLICACIONES */
+        .tabs {
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 50px;
+        }
+        .tab-item {
+            padding: 15px 0;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            color: #8e8e8e;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .tab-item.active { color: var(--text); border-top: 1px solid var(--text); margin-top: -1px; }
+
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            margin-top: 20px;
+        }
+
+        .post-thumb {
+            aspect-ratio: 1 / 1;
+            background: #eee;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .post-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: 0.3s;
+        }
+        .post-thumb:hover img { filter: brightness(0.7); }
+
+        .post-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: 0.3s;
+        }
+        .post-thumb:hover .post-overlay { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .profile-header { flex-direction: column; gap: 20px; text-align: center; }
+            .posts-grid { gap: 3px; }
+            .stats { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+        <div class="logo-placeholder">
+            <i class="fa-solid fa-seedling" style="color: var(--secundario);"></i>
+        </div>
+        <span class="brand-name">Appiu</span>
+        </div>
+        <div class="nav-icons">
+            <a href="menu.html" title="Inicio"><i class="fa-solid fa-house"></i></a>
+            <a href="#" title="Cerrar Sesión" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i></a>
+        </div>
+    </header>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <img src="" id="pfp" class="profile-avatar">
+            <div class="profile-info">
+                <div>
+                    <h2 id="user-title">@usuario</h2>
+                    <button class="btn-edit" onclick="alert('Funcionalidad de edición en camino 🌿')">Editar perfil</button>
+                    <i class="fa-solid fa-gear" style="cursor:pointer; margin-left:10px;"></i>
+                </div>
+                <div class="stats">
+                    <div><b id="num-seguidores">0</b> Seguidores</div>
+                    <div><b id="num-seguidos">0</b> Seguidos</div>
+                </div>
+                <div class="bio">
+                    <b id="full-name">Nombre de Usuario</b>
+                    <p>🌿 Amante de las plantas y el diseño botánico.<br>📍 Mi pequeño pulmón verde.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-item active"><i class="fa-solid fa-table-cells"></i> Publicaciones</div>
+            <div class="tab-item"><i class="fa-regular fa-bookmark"></i> Guardado</div>
+            <div class="tab-item"><i class="fa-solid fa-tag"></i> Etiquetadas</div>
+        </div>
+
+        <div class="posts-grid" id="perfil-posts">
+            </div>
+    </div>
+
+    <script>
+       const user = JSON.parse(localStorage.getItem("user"));
+if(!user) window.location.href = "login.html";
+
+// Elementos de la interfaz
+const pfpImg = document.getElementById("pfp");
+const userTitle = document.getElementById("user-title");
+const fullName = document.getElementById("full-name");
+
+// Cargar datos iniciales
+userTitle.innerText = `@${user.username}`;
+fullName.innerText = user.nombre_completo || user.username;
+// Si el usuario tiene foto en la DB la usa, si no, usa el avatar de DiceBear
+pfpImg.src = user.foto_perfil || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}`;
+
+async function cargarDatosPerfil() {
+    try {
+        // 1. Cargar Contadores reales (Seguidores/Seguidos)
+        const resCont = await fetch(`/api/usuarios/contadores/${user.id}`);
+        const dataCont = await resCont.json();
+        document.getElementById('num-seguidores').innerText = dataCont.seguidores;
+        document.getElementById('num-seguidos').innerText = dataCont.seguidos;
+
+        // 2. Cargar mis publicaciones
+        const resPosts = await fetch("/api/publicaciones");
+        const posts = await resPosts.json();
+        const misPosts = posts.filter(p => p.username === user.username);
+        
+        const feed = document.getElementById("perfil-posts");
+        feed.innerHTML = "";
+        
+        misPosts.forEach(post => {
+            feed.innerHTML += `
+                <div class="post-thumb">
+                    <img src="${post.image_url}">
+                    <div class="post-overlay">
+                        <span><i class="fa-solid fa-heart"></i> ${post.likes || 0}</span>
+                    </div>
+                </div>`;
+        });
+    } catch (e) { console.error("Error cargando perfil:", e); }
+}
+
+// FUNCIÓN PARA EDITAR PERFIL (Subir foto y cambiar nombre)
+async function editarPerfil() {
+    const nuevoNombre = prompt("Introduce tu nuevo nombre:", fullName.innerText);
+    
+    // Crear un input de archivo invisible para elegir la foto
+    const inputFoto = document.createElement('input');
+    inputFoto.type = 'file';
+    inputFoto.accept = 'image/*';
+    
+    inputFoto.onchange = async () => {
+        const foto = inputFoto.files[0];
+        const formData = new FormData();
+        formData.append('id', user.id);
+        formData.append('nombre', nuevoNombre);
+        if(foto) formData.append('foto', foto);
+
+        try {
+            const res = await fetch('/api/usuarios/editar', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if(res.ok) {
+                alert("Perfil actualizado 🌿");
+                // Actualizar localStorage con los nuevos datos
+                user.nombre_completo = nuevoNombre;
+                if(data.foto_url) user.foto_perfil = data.foto_url;
+                localStorage.setItem("user", JSON.stringify(user));
+                location.reload(); // Recargar para ver cambios
+            }
+        } catch (e) { alert("Error al actualizar"); }
+    };
+    
+    inputFoto.click(); // Abrir el selector de archivos del PC
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+}
+
+cargarDatosPerfil();
+    </script>
+</body>
+</html>

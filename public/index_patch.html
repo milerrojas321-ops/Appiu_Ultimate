@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actualizar Producto</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #ff9966, #ff5e62);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    h1 { color: #fff; margin-bottom: 20px; }
+    form { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    input {
+      display: block;
+      margin-bottom: 15px;
+      padding: 10px;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      padding: 10px;
+      border: none;
+      background: #ff5e62;
+      color: #fff;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+      transition: 0.3s;
+    }
+    button:hover { background: #e14d52; }
+    .volver { background: #0072ff; }
+    .volver:hover { background: #005bb5; }
+  </style>
+</head>
+<body>
+  <h1>Actualizar Producto</h1>
+  <form id="form">
+    <input type="number" id="id" placeholder="ID del producto" required>
+    <input type="text" id="nombre" placeholder="Nuevo nombre">
+    <input type="number" id="precio" placeholder="Nuevo precio">
+    <input type="number" id="cantidad" placeholder="Nueva cantidad">
+    <button type="submit">Actualizar</button>
+    <button type="button" class="volver" onclick="window.location.href='menu.html'">⬅ Volver al Menú</button>
+  </form>
+
+  <script>
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("id").value;
+      const nombre = document.getElementById("nombre").value;
+      const precio = document.getElementById("precio").value;
+      const cantidad = document.getElementById("cantidad").value;
+
+      const res = await fetch(`/api/productos/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, precio, cantidad })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert("Producto actualizado: " + data.nombre);
+      } else {
+        alert("Error al actualizar producto");
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultar Productos</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    h1 { color: #fff; margin-bottom: 20px; }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background: #fff;
+      color: #0072ff;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      transition: 0.3s;
+    }
+    button:hover { background: #e6e6e6; }
+    ul { list-style: none; padding: 0; width: 100%; max-width: 600px; }
+    li {
+      background: #fff;
+      margin-bottom: 10px;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .volver { background: #ff5e62; color: white; }
+    .volver:hover { background: #e14d52; }
+  </style>
+</head>
+<body>
+  <h1>Consultar Productos</h1>
+  <button id="cargar">Cargar Productos</button>
+  <button class="volver" onclick="window.location.href='menu.html'">⬅ Volver al Menú</button>
+  <ul id="lista"></ul>
+
+  <script>
+    document.getElementById("cargar").addEventListener("click", async () => {
+      const res = await fetch("/api/productos");
+      const productos = await res.json();
+      const lista = document.getElementById("lista");
+      lista.innerHTML = "";
+      productos.forEach(p => {
+        const li = document.createElement("li");
+        li.textContent = `${p.id} - ${p.nombre} | Precio: $${p.precio} | Cantidad: ${p.cantidad}`;
+        lista.appendChild(li);
+      });
+    });
+  </script>
+</body>
+</html>
+

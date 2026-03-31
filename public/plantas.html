@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorar Plantas | Appiu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    <style>
+        :root {
+            --primario: #1b4332;
+            --secundario: #2d6a4f;
+            --acento: #40916c;
+            --fondo: #f0f2f5;
+            --blanco: #ffffff;
+            --texto: #2d3436;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body { background-color: var(--fondo); color: var(--texto); }
+
+        /* HEADER CON ESPACIO PARA LOGO */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            background: var(--blanco);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        .logo-container { display: flex; align-items: center; gap: 15px; }
+        .logo-placeholder { 
+            width: 45px; height: 45px; 
+            border: 2px dashed #ccc; /* Espacio reservado para tu logo */
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px;
+        }
+        .brand-name { font-size: 1.6rem; font-weight: 800; color: var(--primario); }
+
+        nav { display: flex; gap: 25px; align-items: center; }
+        nav a { text-decoration: none; color: var(--texto); font-size: 1.2rem; transition: 0.3s; }
+        nav a:hover { color: var(--secundario); transform: scale(1.1); }
+
+        /* BUSCADOR */
+        .search-section {
+            background: linear-gradient(135deg, var(--primario), var(--secundario));
+            padding: 50px 20px; text-align: center; color: white;
+        }
+        .search-box {
+            position: relative; max-width: 600px; margin: 20px auto 0;
+        }
+        .search-box input {
+            width: 100%; padding: 15px 25px 15px 50px; border-radius: 30px;
+            border: none; outline: none; font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .search-box i { position: absolute; left: 20px; top: 18px; color: #888; }
+
+        /* GRID DE PLANTAS */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px; padding: 40px 5%; max-width: 1300px; margin: 0 auto;
+        }
+
+        .card {
+            background: var(--blanco); border-radius: 20px; overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: 0.3s; cursor: pointer;
+            border: 1px solid #eee; position: relative;
+        }
+        .card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+        .card img { width: 100%; height: 250px; object-fit: cover; }
+        .card-info { padding: 20px; text-align: center; }
+        .btn-detalle {
+            background: var(--primario); color: white; border: none;
+            padding: 10px 20px; border-radius: 25px; margin-top: 10px; cursor: pointer;
+        }
+
+        /* MODAL GRANDE Y PROFESIONAL */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; justify-content: center;
+            align-items: center; z-index: 2000; backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: white; width: 95%; max-width: 900px; max-height: 90vh;
+            border-radius: 25px; overflow-y: auto; position: relative;
+            display: flex; flex-wrap: wrap; animation: zoomIn 0.3s ease;
+        }
+        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .modal-left { flex: 1; min-width: 300px; }
+        .modal-left img { width: 100%; height: 100%; object-fit: cover; }
+
+        .modal-right { flex: 1.2; padding: 40px; min-width: 300px; }
+        .close-btn { position: absolute; top: 20px; right: 25px; font-size: 2rem; cursor: pointer; color: #333; }
+
+        /* TABLA DE CUIDADOS */
+        .care-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .care-table tr { border-bottom: 1px solid #eee; }
+        .care-table td { padding: 12px 5px; vertical-align: middle; }
+        .care-icon { color: var(--secundario); width: 40px; font-size: 1.2rem; }
+        .care-label { font-weight: bold; color: var(--primario); width: 100px; }
+
+        @media (max-width: 768px) {
+            .modal-content { flex-direction: column; }
+            .modal-left { height: 250px; }
+            header { padding: 10px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <div class="logo-placeholder">
+            <i class="fa-solid fa-seedling" style="color: var(--secundario);"></i>
+        </div>
+        <span class="brand-name">Appiu</span>
+    </div>
+    <nav>
+        <a href="menu.html" title="Inicio"><i class="fa-solid fa-house"></i></a>
+        <a href="publicar.html" title="Publicar"><i class="fa-solid fa-circle-plus"></i></a>
+        <a href="perfil.html" title="Mi Perfil"><i class="fa-solid fa-user-leaf"></i></a>
+    </nav>
+</header>
+
+<div class="search-section">
+    <h1>Explora la Naturaleza</h1>
+    <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="buscar" placeholder="Busca por nombre de planta..." onkeyup="filtrar()">
+    </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="cerrar()">&times;</span>
+        <div class="modal-left">
+            <img id="modalImg" src="" alt="Planta">
+        </div>
+        <div class="modal-right">
+            <h2 id="modalTitulo" style="font-size: 2rem; color: var(--primario);"></h2>
+            <p id="modalDescripcion" style="margin: 15px 0; color: #666;"></p>
+            
+            <h4 style="border-bottom: 2px solid var(--secundario); display: inline-block; margin-top: 10px;">Guía de Cuidados</h4>
+            
+            <table class="care-table">
+                <tr>
+                    <td class="care-icon"><i class="fa-solid fa-sun"></i></td>
+                    <td class="care-label">Luz:</td>
+                    <td id="careLuz"></td>
+                </tr>
+                <tr>
+                    <td class="care-icon"><i class="fa-solid fa-droplet"></i></td>
+                    <td class="care-label">Riego:</td>
+                    <td id="careRiego"></td>
+                </tr>
+                <tr>
+                    <td class="care-icon"><i class="fa-solid fa-temperature-half"></i></td>
+                    <td class="care-label">Clima:</td>
+                    <td id="careClima"></td>
+                </tr>
+                <tr>
+                    <td class="care-icon"><i class="fa-solid fa-leaf"></i></td>
+                    <td class="care-label">Dato Extra:</td>
+                    <td id="careExtra"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Datos extendidos para la tabla de cuidados
+    const plantas = [
+        { 
+            nombre: "Monstera Deliciosa", 
+            imagen: "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=800",
+            descripcion: "Conocida como 'Costilla de Adán', es la reina de la decoración interior.",
+            luz: "Indirecta brillante", riego: "Cada 1-2 semanas", clima: "20°C - 30°C", extra: "Purifica el aire"
+        },
+        { 
+            nombre: "Aloe Vera", 
+            imagen: "https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?w=800",
+            descripcion: "Una suculenta indispensable con propiedades medicinales asombrosas.",
+            luz: "Sol directo", riego: "Escaso (cada 3 semanas)", clima: "Cálido / Seco", extra: "Cura quemaduras"
+        },
+        { 
+            nombre: "Orquídea", 
+            imagen: "img/orquidea.jpg",
+            descripcion: "Símbolo de elegancia y belleza exótica.",
+            luz: "Mucha luz, sin sol", riego: "Sumergir raíces 10 min", clima: "Húmedo", extra: "Larga floración"
+        }
+    ];
+
+    function cargar() {
+        const grid = document.getElementById("grid");
+        grid.innerHTML = plantas.map(p => `
+            <div class="card" onclick="verDetalle('${p.nombre}')">
+                <img src="${p.imagen}">
+                <div class="card-info">
+                    <h3>${p.nombre}</h3>
+                    <button class="btn-detalle">Ver detalles</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function verDetalle(nombre) {
+        const p = plantas.find(item => item.nombre === nombre);
+        document.getElementById("modalTitulo").innerText = p.nombre;
+        document.getElementById("modalImg").src = p.imagen;
+        document.getElementById("modalDescripcion").innerText = p.descripcion;
+        document.getElementById("careLuz").innerText = p.luz;
+        document.getElementById("careRiego").innerText = p.riego;
+        document.getElementById("careClima").innerText = p.clima;
+        document.getElementById("careExtra").innerText = p.extra;
+        document.getElementById("modal").style.display = "flex";
+    }
+
+    function filtrar() {
+        let val = document.getElementById("buscar").value.toLowerCase();
+        document.querySelectorAll(".card").forEach(c => {
+            c.style.display = c.innerText.toLowerCase().includes(val) ? "block" : "none";
+        });
+    }
+
+    function cerrar() { document.getElementById("modal").style.display = "none"; }
+
+    window.onclick = (e) => { if(e.target == document.getElementById("modal")) cerrar(); }
+
+    cargar();
+</script>
+</body>
+</html>

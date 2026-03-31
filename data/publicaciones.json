@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "usuario": "miller",
+    "titulo": "Ortencia",
+    "descripcion": "me encanta esta planta!!!!",
+    "imagen": "blob:http://localhost:3650/fb160866-96c3-46f6-8aa0-ae95bbde5a12",
+    "likes": 454
+  },
+  {
+    "id": 2,
+    "usuario": "ana",
+    "titulo": "lirio",
+    "descripcion": "amo tomar fotos a mis plantas.",
+    "imagen": "blob:http://localhost:3650/384986a1-1274-415b-92c7-0405a68024ee",
+    "likes": 147
+  }
+]
