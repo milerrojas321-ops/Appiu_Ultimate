@@ -234,14 +234,15 @@ async function guardarCambiosPerfil() {
         if (data.success) {
             alert("¡Perfil actualizado con éxito! 🌿");
             
-            // Actualizamos el localStorage para que los cambios se vean sin cerrar sesión
             user.username = nuevoNombre;
             if (data.nuevaFoto) {
-                user.foto_perfil = data.nuevaFoto;
+                // Forzamos que siempre tenga el prefijo /uploads/ si no lo tiene
+                user.foto_perfil = data.nuevaFoto.startsWith('/uploads/') 
+                    ? data.nuevaFoto 
+                    : `/uploads/${data.nuevaFoto}`;
             }
             localStorage.setItem("user", JSON.stringify(user));
-            
-            location.reload(); // Recargamos la página para ver los cambios
+            location.reload();
         } else {
             alert("Error: " + (data.error || "No se pudo actualizar"));
         }

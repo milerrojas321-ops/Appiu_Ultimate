@@ -7,6 +7,8 @@ const multer = require('multer');
 const app = express();
 const PORT = 3650;
 
+
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 // ESTA LÍNEA ES VITAL:
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -21,18 +23,17 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// MIDDLEWARES
+
+// 1. Middlewares de lectura (SIEMPRE PRIMERO)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-
-app.use('/api/usuarios', rutasUsuarios);
-
-app.use(express.static(path.join(__dirname, 'public'))); 
+// 2. Archivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// 3. Rutas (DESPUÉS DE LOS MIDDLEWARES)
+app.use('/api/usuarios', rutasUsuarios);
 
 // RUTA ACTUALIZAR PERFIL (Sincronizada con el Frontend)
 // server.js

@@ -4,11 +4,10 @@ const db = require('../data/db');
 const multer = require('multer');
 const path = require('path');
 
-// Configuración de almacenamiento para fotos de posts
 const storage = multer.diskStorage({
     destination: 'public/uploads/', 
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
+        cb(null, `post-${Date.now()}${path.extname(file.originalname)}`);
     }
 });
 const upload = multer({ storage: storage });
@@ -30,6 +29,21 @@ router.get('/:userId', async (req, res) => {
     }
 });
 
+// OBTENER POSTS
+router.get('/:userId', async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const sql = `
+            SELECT p.*, u.foto_perfil as user_pfp, u.username as user_name,
+            (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id AND user_id = ?) as loLikeo
+            FROM posts p 
+            JOIN users u ON p.user_id = u.id 
+            ORDER BY p.created_at DESC`;
+        const [rows] = await db.query(sql, [userId]);
+        res.json(rows);
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // 2. CREAR PUBLICACIÓN
 router.post('/crear', upload.single('image'), async (req, res) => {
     try {
@@ -46,6 +60,31 @@ router.post('/crear', upload.single('image'), async (req, res) => {
 });
 
 // ... (tota la part inicial de multer i get queda IGUAL)
+
+
+// RUTA DE COMENTARIO (Corregido: Acepta /comentario y /comentar)
+router.post('/:id/comentario', async (req, res) => {
+    const post_id = req.params.id;
+    const { user_id, username, content } = req.body;
+    try {
+        await db.query('INSERT INTO comments (post_id, user_id, username, content) VALUES (?, ?, ?, ?)', [post_id, user_id, username, content]);
+        
+        const [post] = await db.query('SELECT user_id FROM posts WHERE id = ?', [post_id]);
+        if (post.length > 0 && post[0].user_id != user_id) {
+            await db.query('INSERT INTO notificaciones (id_receptor, id_emisor, tipo, id_referencia) VALUES (?, ?, ?, ?)', [post[0].user_id, user_id, 'comment', post_id]);
+        }
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
+});
+
+// OBTENER COMENTARIOS
+router.get('/:id/comentarios', async (req, res) => {
+    try {
+        const sql = `SELECT c.*, u.foto_perfil FROM comments c LEFT JOIN users u ON c.user_id = u.id WHERE c.post_id = ? ORDER BY c.created_at DESC`;
+        const [rows] = await db.query(sql, [req.params.id]);
+        res.json(rows);
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
 
 // 3. AGREGAR COMENTARIO (Actualizado con Notificación)
 router.post('/:id/comentar', async (req, res) => {
@@ -117,20 +156,34 @@ router.post('/:id/like', async (req, res) => {
     }
 });
 
-// OBTENER COMENTARIOS DE UN POST ESPECÍFICO
-router.get('/:id/comentarios', async (req, res) => {
-    const postId = req.params.id;
+// OBTENER POSTS CON JOIN
+router.get('/:userId', async (req, res) => {
     try {
-        // Asegúrate de que el nombre de la tabla sea 'comments' como en tu ruta de POST
-        const sql = 'SELECT * FROM comments WHERE post_id = ? ORDER BY created_at DESC';
-        const [rows] = await db.query(sql, [postId]);
+        const sql = `
+            SELECT p.*, u.foto_perfil as user_pfp, u.username as user_name,
+            (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id AND user_id = ?) as loLikeo
+            FROM posts p 
+            JOIN users u ON p.user_id = u.id 
+            ORDER BY p.created_at DESC`;
+        const [rows] = await db.query(sql, [req.params.userId]);
         
-        // Enviamos los comentarios encontrados (o un array vacío si no hay)
-        res.json(rows);
-    } catch (error) {
-        console.error("Error al obtener comentarios:", error);
-        res.status(500).json({ error: "Error al cargar los comentarios" });
-    }
+        const cleanRows = rows.map(p => ({
+            ...p,
+            user_pfp: p.user_pfp ? (p.user_pfp.startsWith('/uploads/') ? p.user_pfp : `/uploads/${p.user_pfp}`) : '/img/default-avatar.png'
+        }));
+        
+        res.json(cleanRows);
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// COMENTARIOS (Ruta dual para evitar 404)
+router.post('/:id/comentario', async (req, res) => {
+    const post_id = req.params.id;
+    const { user_id, username, content } = req.body;
+    try {
+        await db.query('INSERT INTO comments (post_id, user_id, username, content) VALUES (?, ?, ?, ?)', [post_id, user_id, username, content]);
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
 module.exports = router;

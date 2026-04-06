@@ -389,6 +389,28 @@
             } catch (e) { console.error(e); }
         }
 
+        // 1. Define la ruta del icono sencillo
+        const ICONO_DEFECTO = '/img/icono.jpg'; // O una URL de internet
+
+        // 2. Al renderizar sugerencias o posts, usa esta lógica:
+        function crearCardUsuario(u) {
+            // Si u.foto_perfil es null o vacio, usa el icono
+            const foto = (u.foto_perfil && u.foto_perfil !== 'null') ? u.foto_perfil : ICONO_DEFECTO;
+
+            return `
+                <div class="user-card">
+                    <div class="avatar-container">
+                        <img src="${foto}" 
+                            onerror="this.src='${ICONO_DEFECTO}'" 
+                            alt="avatar" 
+                            onclick="verPerfil(${u.id})">
+                    </div>
+                    <span>${u.username}</span>
+                    <button onclick="followUser(event, ${u.id})">Seguir</button>
+                </div>
+            `;
+        }
+
         function verPerfil(userId) {
             // Si el ID de la publicación es el mismo que el del usuario logueado
             if(userId === user.id) {
