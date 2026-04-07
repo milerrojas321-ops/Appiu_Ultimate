@@ -3,93 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inicio de Sesión</title>
-  <link rel="stylesheet" href="/css/responsive.css">
-  <style>
-    /* Estilos originales mantenidos */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-image: url("./img/login1.jpg");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-
-    .container {
-      background: #fff;
-      padding: 30px 40px;
-      border-radius: 12px;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-      text-align: center;
-      width: 100%;
-      max-width: 400px;
-    }
-
-    h1 {
-      margin-bottom: 20px;
-      font-size: 1.8rem;
-      color: #333;
-    }
-
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-      text-align: left;
-      color: #555;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 12px;
-      width: 100%;
-      border: none;
-      border-radius: 8px;
-      background: #ec53ec;
-      color: #fff;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: #c000ba;
-    }
-
-    p {
-      margin-top: 15px;
-      font-size: 0.9rem;
-    }
-
-    a {
-      color: #ff0aef;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <title>Inicio de Sesión - Appiu</title>
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
   <div class="container">
@@ -106,38 +22,6 @@
     <p>¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a></p>
   </div>
 
-  <script>
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      try {
-        // CAMBIO: Ahora apunta a /auth/login (que es la ruta de la BD)
-        const res = await fetch("/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-          // Guardamos el objeto de usuario completo (incluyendo el ID de la BD)
-          localStorage.setItem("user", JSON.stringify(data.user));
-          alert("Bienvenido de nuevo, " + data.user.username + " ✅");
-          
-          // Redirigir al menú principal
-          window.location.href = "menu.html";
-        } else {
-          alert("Error: " + (data.message || "Credenciales incorrectas ❌"));
-        }
-      } catch (error) {
-        console.error("Error en login:", error);
-        alert("No se pudo conectar con el servidor ❌");
-      }
-    });
-  </script>
+  <script src="js/login.js"></script>
 </body>
 </html>

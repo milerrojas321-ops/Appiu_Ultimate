@@ -1,0 +1,163 @@
+:root {
+    --appiu-green: #1d4d2f;
+    --appiu-bg: #f4f7f6;
+    --appiu-white: #ffffff;
+    --text-main: #2c3e50;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--appiu-bg);
+    color: var(--text-main);
+}
+
+.appiu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5%;
+    background: var(--appiu-white);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+}
+
+.logo-circle {
+    width: 40px;
+    height: 40px;
+    background: var(--appiu-green);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.search-container {
+    background: #f0f2f1;
+    padding: 10px 20px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    width: 40%;
+}
+
+.search-container input {
+    border: none;
+    background: none;
+    margin-left: 10px;
+    width: 100%;
+    outline: none;
+}
+
+.categories {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.pill {
+    padding: 10px 25px;
+    border-radius: 50px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.pill.active, .pill:hover {
+    background: var(--appiu-green);
+    color: white;
+    border-color: var(--appiu-green);
+}
+
+/* Grid de Tarjetas */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    padding: 0 5%;
+}
+
+.plant-card {
+    background: white;
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.plant-card:hover { transform: translateY(-10px); }
+
+.plant-card img { width: 100%; height: 200px; object-fit: cover; }
+
+.card-info { padding: 20px; }
+.card-info h3 { margin: 0; color: var(--appiu-green); }
+.card-info p { font-size: 0.9em; color: #666; }
+
+/* Modal Estilo Premium */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 800px;
+    margin: 5% auto;
+    border-radius: 30px;
+    overflow: hidden;
+    position: relative;
+    animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-header-img img { width: 100%; height: 350px; object-fit: cover; }
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 35px;
+    color: white;
+    cursor: pointer;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.modal-info { padding: 30px; }
+
+.care-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 25px 0;
+}
+
+.care-item { display: flex; align-items: center; gap: 15px; background: #f8faf9; padding: 15px; border-radius: 15px; }
+.care-item i { color: var(--appiu-green); font-size: 1.5em; }
+.care-item p { margin: 0; font-size: 0.85em; }
+
+.btn-adoptar {
+    background: var(--appiu-green);
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 15px;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+}

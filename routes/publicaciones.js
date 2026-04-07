@@ -181,7 +181,7 @@ router.post('/:id/comentario', async (req, res) => {
     const post_id = req.params.id;
     const { user_id, username, content } = req.body;
     try {
-        await db.query('INSERT INTO comments (post_id, user_id, username, content) VALUES (?, ?, ?, ?)', [post_id, user_id, username, content]);
+        await db.query('INSERT INTO comentarios (post_id, user_id, username, texto) VALUES (?, ?, ?, ?)', [post_id, user_id, username, content]);
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });

@@ -1,0 +1,204 @@
+/* ========================================== */
+/* VARIABLES Y RESET (Estilo Appiu Moderno) */
+/* ========================================== */
+:root {
+    --primary-green: #1a4d2e; /* Verde bosque Appiu */
+    --accent-leaf: #3d8c5c;  /* Verde hoja vibrante */
+    --bg-cream: #fbfaf5;     /* Crema suave */
+    --white: #ffffff;
+    --text-main: #0d2117;    /* Casi negro botánico */
+    --text-light: #5c6c61;
+    --border-soft: #e0e6e2;
+    --shadow-subtle: 0 4px 20px rgba(26, 77, 46, 0.05);
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 8px;
+    --transition: 0.3s ease;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+body { background: var(--bg-cream); color: var(--text-main); line-height: 1.6; }
+
+/* Cabecera Principal Estilo Appiu */
+.main-header {
+    height: 70px; background: var(--white); border-bottom: 1px solid var(--border-soft);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 50px; position: sticky; top: 0; z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+.logo-container { cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.logo-icon { color: var(--accent-leaf); font-size: 1.6rem; }
+.logo-text { font-weight: 800; font-size: 1.5rem; color: var(--primary-green); letter-spacing: -1px; }
+.nav-icons { display: flex; gap: 30px; align-items: center; }
+.nav-icon { font-size: 1.4rem; cursor: pointer; color: var(--text-light); transition: var(--transition); }
+.nav-icon:hover { color: var(--accent-leaf); transform: translateY(-2px); }
+.logout-icon:hover { color: #ff4d4d !important; }
+
+/* Contenedor Principal de la Página */
+.profile-page { max-width: 935px; margin: 40px auto; padding: 0 20px; padding-bottom: 60px; }
+
+/* ========================================== */
+/* SECCIÓN 1: CABECERA DEL PERFIL (HERO) */
+/* ========================================== */
+.profile-hero { margin-bottom: 50px; }
+.profile-hero-content { display: flex; gap: 70px; align-items: flex-start; }
+
+/* Avatar y Botón de Cambio */
+.avatar-wrapper { position: relative; flex-shrink: 0; }
+.avatar-wrapper img { 
+    width: 160px; height: 160px; border-radius: 50%; object-fit: cover; 
+    border: 4px solid var(--white); box-shadow: 0 8px 25px rgba(26, 77, 46, 0.1);
+    background: var(--white);
+}
+.change-pfp-btn {
+    position: absolute; bottom: 5px; right: 5px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent-leaf); color: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: 3px solid var(--white);
+    transition: var(--transition); box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.change-pfp-btn:hover { background: var(--primary-green); transform: scale(1.1); }
+
+/* Detalles del Perfil */
+.profile-details { flex-grow: 1; padding-top: 10px; }
+.details-top { display: flex; align-items: center; gap: 20px; margin-bottom: 25px; }
+.profile-username { font-weight: 700; font-size: 1.8rem; color: var(--primary-green); letter-spacing: -0.5px; }
+.btn-edit-profile {
+    padding: 8px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);
+    background: var(--white); font-weight: 700; cursor: pointer;
+    font-size: 0.9rem; color: var(--text-light); transition: var(--transition);
+    display: flex; align-items: center; gap: 8px;
+}
+.btn-edit-profile:hover { background: #f0f3f1; color: var(--primary-green); border-color: #ccd5d0; }
+
+.profile-bio-block { margin-bottom: 20px; }
+.profile-real-name { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+.profile-bio-text { color: var(--text-light); font-size: 0.95rem; max-width: 500px; }
+
+/* ========================================== */
+/* SECCIÓN 2: BARRA DE ESTADÍSTICAS */
+/* ========================================== */
+.profile-stats-bar {
+    background: var(--white); padding: 20px; border-radius: var(--radius-md);
+    display: flex; justify-content: space-around;
+    box-shadow: var(--shadow-subtle); margin-bottom: 40px;
+    border: 1px solid #f2f5f3;
+}
+.stat-item { text-align: center; flex: 1; position: relative; }
+.stat-item:not(:last-child)::after {
+    content:''; position: absolute; right: 0; top: 15%; height: 70%;
+    width: 1px; background: var(--border-soft);
+}
+.stat-value { display: block; font-size: 1.6rem; font-weight: 800; color: var(--primary-green); }
+.stat-label { display: block; font-size: 0.85rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.stat-item.clickable { cursor: pointer; transition: var(--transition); }
+.stat-item.clickable:hover .stat-value { color: var(--accent-leaf); }
+
+/* ========================================== */
+/* SECCIÓN 3: PESTAÑAS Y GALERÍA */
+/* ========================================== */
+.content-tabs {
+    border-top: 1px solid var(--border-soft); display: flex; justify-content: center;
+    margin-bottom: 25px;
+}
+.tab-item {
+    padding: 15px 30px; font-size: 0.8rem; font-weight: 700; letter-spacing: 1px;
+    cursor: pointer; color: var(--text-light); border-top: 2px solid transparent;
+    text-transform: uppercase; display: flex; align-items: center; gap: 8px;
+    transition: var(--transition);
+}
+.tab-item.active { color: var(--primary-green); border-top-color: var(--primary-green); margin-top: -1px; }
+
+/* Galería de Publicaciones Tipo Red Social */
+.posts-gallery {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; /* Separación mínima y limpia */
+}
+.gallery-item {
+    aspect-ratio: 1/1; position: relative; cursor: pointer;
+    border-radius: var(--radius-sm); overflow: hidden;
+    background: var(--white); box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
+.gallery-overlay {
+    position: absolute; top:0; left:0; width:100%; height:100%;
+    background: rgba(26, 77, 46, 0.7); /* Verde Appiu translúcido */
+    display: none; align-items: center; justify-content: center;
+    color: var(--white); font-weight: 800; font-size: 1.3rem; gap: 8px;
+    transition: var(--transition);
+}
+.gallery-item:hover .gallery-overlay { display: flex; }
+.gallery-item:hover img { transform: scale(1.05); }
+
+/* Icono de opciones en el overlay */
+.overlay-options {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 1.2rem; color: var(--white);
+    opacity: 0.8; transition: var(--transition);
+}
+.overlay-options:hover { opacity: 1; transform: scale(1.1); }
+
+/* ========================================== */
+/* MODAL Y ACCIONES (Estilo Appiu Elegante) */
+/* ========================================== */
+.modal-overlay {
+    display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(13, 33, 23, 0.8); /* Fondo oscuro botánico */
+    z-index: 2000; align-items: center; justify-content: center;
+    backdrop-filter: blur(5px); transition: var(--transition);
+}
+.modal-overlay.active { display: flex; }
+.modal-card {
+    background: var(--white); padding: 35px; border-radius: var(--radius-lg);
+    width: 450px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    border: 1px solid #eef2ef; transform: scale(0.9); transition: var(--transition);
+}
+.modal-overlay.active .modal-card { transform: scale(1); }
+
+.modal-header { display:flex; justify-content:space-between; align-items: center; margin-bottom:30px; }
+.modal-header h3 { font-weight: 800; color: var(--primary-green); font-size: 1.4rem; letter-spacing: -0.5px; }
+.btn-close-modal { background: #f0f3f1; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: var(--text-light); transition: var(--transition); }
+.btn-close-modal:hover { background: #e0e6e2; color: var(--primary-green); }
+
+.form-section { margin-bottom: 20px; }
+.form-section h4 { font-size: 0.9rem; text-transform: uppercase; color: var(--accent-leaf); letter-spacing: 1px; margin-bottom: 15px; }
+.form-input-group { margin-bottom: 18px; }
+.form-input-group label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+.form-input-group input, .form-input-group textarea {
+    width: 100%; padding: 12px 15px; border: 1px solid var(--border-soft); border-radius: var(--radius-sm);
+    background: #fbfbfb; transition: var(--transition); font-size: 0.95rem;
+}
+.form-input-group input:focus, .form-input-group textarea:focus {
+    border-color: var(--accent-leaf); box-shadow: 0 0 0 3px rgba(61, 140, 92, 0.1); outline: none; background: var(--white);
+}
+
+.modal-actions { display: flex; gap: 15px; margin-top: 30px; }
+.btn-cancel {
+    flex: 1; padding: 12px; border-radius: var(--radius-sm);
+    background: #f5f5f5; color: var(--text-light); border: none; font-weight: 700; cursor: pointer; transition: var(--transition);
+}
+.btn-cancel:hover { background: #eee; color: var(--text-main); }
+.btn-save-changes {
+    flex: 2; padding: 12px; border-radius: var(--radius-sm);
+    background: var(--primary-green); color: var(--white); border: none; font-weight: 700; cursor: pointer; transition: var(--transition);
+}
+.btn-save-changes:hover { background: var(--accent-leaf); }
+
+/* Menú de opciones de post (Bottom Sheet) */
+.post-options-menu {
+    position: fixed; bottom: -100%; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 400px; background: var(--white);
+    border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg);
+    padding: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+    z-index: 2500; transition: 0.4s ease;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.post-options-menu.active { bottom: 0; }
+.post-options-menu button {
+    width: 100%; padding: 15px; border: none; border-radius: var(--radius-md);
+    font-weight: 700; cursor: pointer; font-size: 1rem; transition: var(--transition);
+}
+.btn-delete-post { background: #fff1f1; color: #ff4d4d; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.btn-delete-post:hover { background: #ffebeb; }
+.btn-cancel-options { background: #f5f5f5; color: var(--text-light); }
+.btn-cancel-options:hover { background: #eee; color: var(--text-main); }

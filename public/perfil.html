@@ -3,312 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil | Appiu</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Mi Perfil Jardín | Appiu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #1a4d2e;
-            --accent: #ff4d94;
-            --bg: #ffffff;
-            --gray-bg: #fafafa;
-            --text: #0d2117;
-            --border: #dbdbdb;
-        }
-
-        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: var(--text); }
-
-        /* HEADER */
-        header {
-            height: 60px;
-            background: white;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            position: sticky; top: 0; z-index: 1000;
-        }
-        .logo-container { display: flex; align-items: center; gap: 10px; }
-        .brand-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
-        .nav-icons { display: flex; gap: 20px; font-size: 1.2rem; }
-        .nav-icons a { color: var(--text); text-decoration: none; transition: 0.3s; }
-        .nav-icons a:hover { color: var(--primary); }
-
-        /* SECCIÓN DE PERFIL */
-        .profile-container { max-width: 935px; margin: 30px auto; padding: 0 20px; }
-        .profile-header { display: flex; align-items: center; gap: 80px; margin-bottom: 44px; }
-        .profile-avatar { width: 150px; height: 150px; border-radius: 50%; border: 2px solid var(--border); padding: 5px; object-fit: cover; }
-
-        .profile-info h2 { font-size: 1.8rem; font-weight: 300; display: inline-block; margin-right: 20px; }
-        .btn-edit {
-            background: transparent; border: 1px solid var(--border);
-            padding: 5px 10px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.9rem;
-        }
-
-        .stats { display: flex; gap: 40px; margin: 20px 0; list-style: none; }
-        .stats b { font-weight: 600; }
-
-        .bio { font-size: 1rem; line-height: 1.5; }
-        .bio b { display: block; margin-bottom: 5px; }
-
-        /* TABS */
-        .tabs { border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 60px; margin-top: 50px; }
-        .tab-item { padding: 15px 0; text-transform: uppercase; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: #8e8e8e; display: flex; align-items: center; gap: 5px; }
-        .tab-item.active { color: var(--text); border-top: 1px solid var(--text); margin-top: -1px; }
-
-        /* GRID DE POSTS */
-        .posts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 20px; }
-        .post-thumb { aspect-ratio: 1 / 1; background: #eee; position: relative; overflow: hidden; cursor: pointer; }
-        .post-thumb img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
-        .post-thumb:hover img { filter: brightness(0.7); }
-        .post-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center;
-            color: white; font-size: 1.2rem; opacity: 0; transition: 0.3s;
-        }
-        .post-thumb:hover .post-overlay { opacity: 1; }
-
-        @media (max-width: 768px) {
-            .profile-header { flex-direction: column; gap: 20px; text-align: center; }
-            .posts-grid { gap: 3px; }
-        }
-    </style>
+    <link rel="stylesheet" href="css/perfil.css">
 </head>
 <body>
-
-    <header>
-        <div class="logo-container">
-            <i class="fa-solid fa-seedling" style="color: var(--primary);"></i>
-            <span class="brand-name">Appiu</span>
+    <header class="main-header">
+        <div class="logo-container" onclick="location.href='menu.html'">
+            <i class="fa-solid fa-leaf logo-icon"></i>
+            <span class="logo-text">Appiu</span>
         </div>
-        <div class="nav-icons">
-            <a href="menu.html" title="Inicio"><i class="fa-solid fa-house"></i></a>
-            <a href="#" title="Cerrar Sesión" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i></a>
-        </div>
+        <nav class="nav-icons">
+            <i class="fa-solid fa-house nav-icon" onclick="location.href='menu.html'" title="Inicio"></i>
+            <i class="fa-solid fa-feather-pointed nav-icon" onclick="location.href='misplantas.html'" title="Mis Plantas"></i>
+            <i class="fa-solid fa-sign-out-alt nav-icon logout-icon" onclick="logout()" title="Cerrar Sesión"></i>
+        </nav>
     </header>
 
-    <div class="profile-container">
-        <div class="profile-header">
-            <img src="" id="pfp" class="profile-avatar">
-            <div class="profile-info">
-                <div>
-                    <h2 id="user-title">@usuario</h2>
-                    <button class="btn-edit" onclick="mostrarFormulario()">Editar perfil</button>
-                    
-                    <div id="contenedor-editar" style="display: none; margin-top: 20px; background: var(--gray-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                        <form id="form-editar-perfil">
-                            <input type="hidden" name="idUsuario" id="input-id-usuario">
-                            <label>Nuevo nombre de usuario:</label>
-                            <input type="text" name="nombreUsuario" id="input-nombre-usuario" style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid var(--border); border-radius: 4px;">
-                            
-                            <label>Subir foto de perfil:</label>
-                            <input type="file" name="fotoPerfil" id="input-foto-perfil" accept="image/*" style="margin: 10px 0; display: block;">
-
-                            <button type="button" onclick="guardarCambiosPerfil()" class="btn-edit" style="background: var(--primary); color: white; border: none; width: 100%; padding: 10px; margin-top: 10px;">Guardar cambios</button>
-                            <button type="button" onclick="mostrarFormulario()" style="color: gray; background:none; border:none; width:100%; margin-top:10px; cursor:pointer; font-size: 0.8rem;">Cancelar</button>
-                        </form>
+    <main class="profile-page">
+        <section class="profile-hero">
+            <div class="profile-hero-content">
+                <div class="avatar-wrapper">
+                    <img src="" id="pfp-grande" alt="Tu foto de perfil botánico">
+                    <label for="edit-foto-input" class="change-pfp-btn">
+                        <i class="fa-solid fa-camera"></i>
+                    </label>
+                </div>
+                
+                <div class="profile-details">
+                    <div class="details-top">
+                        <h2 id="username-display" class="profile-username">@usuario_botanico</h2>
+                        <button class="btn-edit-profile" onclick="abrirModalEdicion()">
+                            <i class="fa-solid fa-pen-to-square"></i> Editar mi Jardín
+                        </button>
                     </div>
-                    <i class="fa-solid fa-gear" style="cursor:pointer; margin-left:10px; color: gray;"></i>
-                </div>
-                <div class="stats">
-                    <li><b id="num-seguidores">0</b> Seguidores</li>
-                    <li><b id="num-seguidos">0</b> Seguidos</li>
-                </div>
-                <div class="bio">
-                    <b id="full-name">Nombre de Usuario</b>
-                    <p>🌿 Amante de las plantas y el diseño botánico.<br>📍 Mi pequeño pulmón verde.</p>
+                    
+                    <div class="profile-bio-block">
+                        <h1 id="nombre-completo" class="profile-real-name">Nombre de la Planta Maestra</h1>
+                        <p id="bio-text" class="profile-bio-text">Aquí va tu historia verde... Cargando biografía...</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="tabs">
-            <div class="tab-item active"><i class="fa-solid fa-table-cells"></i> Publicaciones</div>
-            <div class="tab-item"><i class="fa-regular fa-bookmark"></i> Guardado</div>
-            <div class="tab-item"><i class="fa-solid fa-tag"></i> Etiquetadas</div>
-        </div>
-
-        <div class="posts-grid" id="perfil-posts">
+        <section class="profile-stats-bar">
+            <div class="stat-item">
+                <span class="stat-value" id="count-posts">0</span>
+                <span class="stat-label">Brotes</span>
             </div>
+            <div class="stat-item clickable" onclick="verSeguidores()">
+                <span class="stat-value" id="count-seguidores">0</span>
+                <span class="stat-label">Seguidores</span>
+            </div>
+            <div class="stat-item clickable" onclick="verSeguidos()">
+                <span class="stat-value" id="count-seguidos">0</span>
+                <span class="stat-label">Siguiendo</span>
+            </div>
+        </section>
+
+        <section class="profile-content-section">
+            <nav class="content-tabs">
+                <div class="tab-item active">
+                    <i class="fa-solid fa-grip-vertical"></i> Mis Brotes Publicados
+                </div>
+            </nav>
+
+            <div class="posts-gallery" id="grid-publicaciones">
+                <div class="loading-skeletons">
+                    </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal-overlay" id="modal-edit">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Configuración del Jardín</h3>
+                <button class="btn-close-modal" onclick="cerrarModalEdicion()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="form-edit-perfil" class="modal-form">
+                <div class="form-section">
+                    <h4>Identidad</h4>
+                    <div class="form-input-group">
+                        <label>Nombre de Usuario (Arroba)</label>
+                        <input type="text" id="edit-username" name="username" placeholder="@tu_alias_verde">
+                    </div>
+                    <div class="form-input-group">
+                        <label>Nombre de la Planta Maestra (Real)</label>
+                        <input type="text" id="edit-nombre" name="nombre_completo" placeholder="Tu nombre botánico">
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h4>Biografía</h4>
+                    <div class="form-input-group">
+                        <label>Tu historia verde</label>
+                        <textarea id="edit-bio" name="biografia" rows="4" placeholder="Comparte tu amor por las plantas..."></textarea>
+                    </div>
+                </div>
+                
+                <input type="file" id="edit-foto-input" name="foto_perfil" accept="image/*" style="display:none;">
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="cerrarModalEdicion()">Cancelar</button>
+                    <button type="submit" class="btn-save-changes">Guardar Cambios Verdes</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <script>
-        const user = JSON.parse(localStorage.getItem("user"));
-        if(!user) window.location.href = "login.html";
+    <div class="post-options-menu" id="postOptionsMenu">
+        <button class="btn-delete-post" id="btnConfirmarEliminar">
+            <i class="fa-solid fa-trash-can"></i> Eliminar Brote
+        </button>
+        <button class="btn-cancel-options" onclick="cerrarOpcionesPost()">Cancelar</button>
+    </div>
 
-        const pfpImg = document.getElementById("pfp");
-        const userTitle = document.getElementById("user-title");
-        const fullName = document.getElementById("full-name");
-
-        function inicializarVista() {
-            userTitle.innerText = `@${user.username}`;
-            fullName.innerText = user.username;
-            pfpImg.src = user.foto_perfil || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}`;
-        }
-
-        async function cargarDatosPerfil() {
-            try {
-                // 1. Cargar contadores
-                const resCont = await fetch(`/api/usuarios/contadores/${user.id}`);
-                const dataCont = await resCont.json();
-                document.getElementById('num-seguidores').innerText = dataCont.seguidores || 0;
-                document.getElementById('num-seguidos').innerText = dataCont.seguidos || 0;
-
-                // 2. Cargar publicaciones (Fotos)
-                const resPosts = await fetch("/api/publicaciones");
-                const posts = await resPosts.json();
-                
-                // Filtramos para que solo salgan las del usuario actual
-                const misPosts = posts.filter(p => p.username === user.username);
-                
-                const feed = document.getElementById("perfil-posts");
-                if (misPosts.length === 0) {
-                    feed.innerHTML = "<p style='grid-column: 1/4; text-align: center; color: gray; margin-top: 20px;'>Aún no tienes publicaciones 🌿</p>";
-                } else {
-                    feed.innerHTML = misPosts.map(post => `
-                        <div class="post-thumb">
-                            <img src="${post.image_url}">
-                            <div class="post-overlay">
-                                <span><i class="fa-solid fa-heart"></i> ${post.likes || 0}</span>
-                            </div>
-                        </div>`).join("");
-                }
-            } catch (e) { 
-                console.error("Error cargando perfil:", e); 
-            }
-        }
-
-
-        function mostrarFormulario() {
-        const contenedor = document.getElementById('contenedor-editar');
-        const user = JSON.parse(localStorage.getItem("user"));
-        
-        // Verificamos si el contenedor existe para evitar errores
-        if (!contenedor) return;
-
-        if (contenedor.style.display === 'none' || contenedor.style.display === '') {
-            contenedor.style.display = 'block';
-            // Esto rellena el input con el nombre que ya tiene el usuario
-            if (user && user.username) {
-                document.getElementById('input-nombre-usuario').value = user.username;
-            }
-        } else {
-            contenedor.style.display = 'none';
-        }
-    }
-
-        // perfil.html - Dentro de guardarCambiosPerfil()
-
-async function guardarCambiosPerfil() {
-    // 1. Obtenemos los elementos usando los IDs reales de tu HTML
-    const inputNombre = document.getElementById('input-nombre-usuario');
-    const inputFoto = document.getElementById('input-foto-perfil');
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    // 2. Verificamos que los datos existan
-    if (!inputNombre || !user) {
-        console.error("Error: No se encontró el campo de nombre o el usuario en sesión.");
-        return;
-    }
-
-    const nuevoNombre = inputNombre.value;
-    const fotoFile = inputFoto.files[0];
-
-    // 3. Creamos el FormData para enviar archivos y texto
-    const formData = new FormData();
-    formData.append('idUsuario', user.id);
-    formData.append('nombreUsuario', nuevoNombre);
-    
-    if (fotoFile) {
-        formData.append('fotoPerfil', fotoFile);
-    }
-
-    try {
-        const res = await fetch('/api/usuarios/actualizar', {
-            method: 'POST',
-            body: formData // Enviamos el objeto FormData
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-            alert("¡Perfil actualizado con éxito! 🌿");
-            
-            user.username = nuevoNombre;
-            if (data.nuevaFoto) {
-                // Forzamos que siempre tenga el prefijo /uploads/ si no lo tiene
-                user.foto_perfil = data.nuevaFoto.startsWith('/uploads/') 
-                    ? data.nuevaFoto 
-                    : `/uploads/${data.nuevaFoto}`;
-            }
-            localStorage.setItem("user", JSON.stringify(user));
-            location.reload();
-        } else {
-            alert("Error: " + (data.error || "No se pudo actualizar"));
-        }
-    } catch (error) {
-        console.error("Error en la petición:", error);
-        alert("Hubo un fallo en la conexión con el servidor.");
-    }
-}
-
-async function toggleSeguir(idDestino) {
-    console.log("1. Función toggleSeguir iniciada con idDestino:", idDestino);
-    
-    const userLogueado = JSON.parse(localStorage.getItem("user"));
-    console.log("2. Usuario en localStorage:", userLogueado);
-
-    if (!userLogueado || !userLogueado.id) {
-        alert("Error: No se encontró tu ID de usuario. ¿Iniciaste sesión?");
-        return;
-    }
-
-    try {
-        console.log("3. Enviando petición a /api/usuarios/follow...");
-        
-        // Fíjate bien si tu ruta es /follow o /seguir en el backend
-        const res = await fetch('/api/usuarios/follow', { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idSeguidor: userLogueado.id,
-                idSeguido: idDestino
-            })
-        });
-
-        console.log("4. Respuesta recibida del servidor. Status:", res.status);
-
-        if (res.status === 500) {
-            const errorTexto = await res.text();
-            console.error("Error 500 detectado:", errorTexto);
-            alert("El servidor falló (Error 500). Revisa la terminal ahora.");
-            return;
-        }
-
-        const data = await res.json();
-        console.log("5. Datos procesados:", data);
-        
-        if (data.success) {
-            const btn = document.getElementById(`btn-seguir-${idDestino}`);
-            if (btn) {
-                btn.innerText = data.accion === 'followed' ? 'Siguiendo' : 'Seguir';
-                btn.classList.toggle('siguiendo');
-            }
-            alert(data.accion === 'followed' ? "¡Ahora lo sigues!" : "Dejaste de seguir");
-        }
-    } catch (error) {
-        console.error("6. ERROR DE RED/CONEXIÓN:", error);
-        alert("No se pudo conectar con el servidor.");
-    }
-}
-
-        function logout() {
-            localStorage.clear();
-            window.location.href = "login.html";
-        }
-
-        inicializarVista();
-        cargarDatosPerfil();
-    </script>
+    <script src="js/perfil.js"></script>
 </body>
 </html>

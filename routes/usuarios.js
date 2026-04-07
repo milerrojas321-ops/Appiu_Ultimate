@@ -40,6 +40,22 @@ router.post('/registro', upload.single('foto_perfil'), async (req, res) => {
     }
 });
 
+// ESTA ES LA RUTA QUE TE FALTA O ESTÁ FALLANDO
+router.get('/:id', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        const [rows] = await db.query('SELECT id, username, email, foto_perfil, is_expert, expert_bio FROM users WHERE id = ?', [userId]);
+        
+        if (rows.length > 0) {
+            res.json(rows[0]);
+        } else {
+            res.status(404).json({ error: "Usuario no encontrado" });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- RUTA DE LOGIN ---
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
@@ -123,20 +139,57 @@ router.get('/sugerencias/:userId', async (req, res) => {
     }
 });
 
-// FOLLOW
+//ajusta la ruta a tu conexión
+
 router.post('/follow', async (req, res) => {
-    const idSeguidor = req.body.seguidor_id || req.body.idSeguidor;
-    const idSeguido = req.body.seguido_id || req.body.idSeguido;
+    const { seguidor_id, seguido_id, idSeguidor, idSeguido } = req.body;
+    const final_seguidor = seguidor_id || idSeguidor;
+    const final_seguido = seguido_id || idSeguido;
+
+    console.log(`Intentando alternar follow: ${final_seguidor} -> ${final_seguido}`);
+
     try {
-        const [existe] = await db.query('SELECT * FROM seguidores WHERE id_seguidor = ? AND id_seguido = ?', [idSeguidor, idSeguido]);
+        // 1. Verificar si ya existe la relación
+        const [existe] = await db.query(
+            "SELECT * FROM seguidores WHERE id_seguidor = ? AND id_seguido = ?", 
+            [final_seguidor, final_seguido]
+        );
+
         if (existe.length > 0) {
-            await db.query('DELETE FROM seguidores WHERE id_seguidor = ? AND id_seguido = ?', [idSeguidor, idSeguido]);
-            res.json({ success: true, action: 'unfollowed' });
+            // 2. SI EXISTE: Dejar de seguir (Delete)
+            await db.query(
+                "DELETE FROM seguidores WHERE id_seguidor = ? AND id_seguido = ?", 
+                [final_seguidor, final_seguido]
+            );
+            
+            // Opcional: Borrar la notificación de follow previa
+            await db.query(
+                "DELETE FROM notificaciones WHERE id_receptor = ? AND id_emisor = ? AND tipo = 'follow'",
+                [final_seguido, final_seguidor]
+            );
+
+            console.log("✅ Dejó de seguir con éxito");
+            return res.json({ success: true, action: 'unfollowed' });
         } else {
-            await db.query('INSERT INTO seguidores (id_seguidor, id_seguido) VALUES (?, ?)', [idSeguidor, idSeguido]);
-            res.json({ success: true, action: 'followed' });
+            // 3. NO EXISTE: Seguir (Insert)
+            await db.query(
+                "INSERT INTO seguidores (id_seguidor, id_seguido) VALUES (?, ?)", 
+                [final_seguidor, final_seguido]
+            );
+
+            // 4. Crear la notificación (Ajustada a tu tabla sin columna 'mensaje')
+            await db.query(
+                "INSERT INTO notificaciones (id_receptor, id_emisor, tipo, id_referencia, leido) VALUES (?, ?, ?, ?, ?)", 
+                [final_seguido, final_seguidor, 'follow', final_seguidor, false]
+            );
+
+            console.log("✅ Siguiendo con éxito y notificación creada");
+            return res.json({ success: true, action: 'followed' });
         }
-    } catch (error) { res.status(500).json({ error: error.message }); }
+    } catch (error) {
+        console.error("ERROR EN TOGGLE FOLLOW:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 module.exports = router;

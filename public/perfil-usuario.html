@@ -5,103 +5,27 @@
     <title>Perfil de Usuario | Appiu</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #1a4d2e;
-            --primary-light: #eefdf5;
-            --bg: #f3f7f5;
-            --white: #ffffff;
-            --text: #0d2117;
-        }
-        body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; display: flex; }
-        
-        /* Contenedor Simple */
-        .profile-container { max-width: 800px; margin: 50px auto; width: 100%; padding: 20px; }
-        
-        .profile-header { 
-            background: white; padding: 40px; border-radius: 24px; 
-            display: flex; align-items: center; gap: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        .profile-pfp { width: 120px; height: 120px; border-radius: 30px; object-fit: cover; background: #eee; }
-        
-        /* Cuadrícula de fotos (Grid) */
-        .photo-grid { 
-            display: grid; grid-template-columns: repeat(3, 1fr); 
-            gap: 15px; margin-top: 30px; 
-        }
-        .grid-item { 
-            width: 100%; aspect-ratio: 1 / 1; object-fit: cover; 
-            border-radius: 15px; background: #ddd; 
-        }
-
-        .btn-back {
-            text-decoration: none; color: var(--primary); font-weight: 700;
-            display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/perfil-usuario.css">
 </head>
 <body>
     <div class="profile-container">
-        <a href="menu.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Volver al Feed</a>
-        
-        <div class="profile-header">
-            <img src="" id="user-foto" class="profile-pfp">
-            <div>
-                <h1 id="user-name" style="margin:0; font-weight:800; color:var(--text);">Cargando...</h1>
-                <p id="user-bio" style="color:#666; margin-top:5px;">Buscando brotes...</p>
-                <button id="btn-follow-perfil" class="btn-follow" style="margin-top:15px; padding:10px 25px; border-radius:10px; border:none; background:var(--primary); color:white; font-weight:700; cursor:pointer;">
-                    Seguir
-                </button>
-            </div>
-        </div>
+        <button onclick="history.back()" style="margin-bottom: 20px; border: none; background: none; cursor: pointer; color: var(--primary); font-weight: 800;">
+            <i class="fa-solid fa-arrow-left"></i> Volver
+        </button>
 
-        <h3 style="margin-top:40px; color:var(--primary);">Publicaciones</h3>
-        <div class="photo-grid" id="grid-posts">
+        <section class="profile-header">
+            <img src="" id="user-foto" alt="Foto de perfil">
+            <div class="user-details">
+                <h1 id="user-name">Cargando...</h1>
+                <p id="user-bio">...</p>
+                <button class="btn-follow-main">Seguir</button>
+            </div>
+        </section>
+
+        <div class="grid-posts" id="grid-posts">
             </div>
     </div>
 
-    <script>
-        // 1. Obtener el ID del usuario desde la URL (?id=4)
-        const params = new URLSearchParams(window.location.search);
-        const perfilId = params.get('id');
-        const miUsuario = JSON.parse(localStorage.getItem("user"));
-
-        async function cargarDatosPerfil() {
-            if (!perfilId) return;
-
-            try {
-                // Llamamos a la ruta que pusimos en usuarios.js
-                const res = await fetch(`/api/usuarios/perfil/${perfilId}`);
-                const data = await res.json();
-
-                if (data.error) {
-                    document.getElementById('user-name').innerText = "Usuario no encontrado";
-                    return;
-                }
-
-                // Llenar datos básicos
-                document.getElementById('user-name').innerText = data.usuario.username;
-                document.getElementById('user-foto').src = data.usuario.foto_perfil || `https://api.dicebear.com/7.x/bottts/svg?seed=${data.usuario.username}`;
-                document.getElementById('user-bio').innerText = data.usuario.biografia || "Sin biografía aún.";
-
-                // Llenar las fotos
-                const grid = document.getElementById('grid-posts');
-                grid.innerHTML = "";
-                
-                if (data.publicaciones.length === 0) {
-                    grid.innerHTML = "<p style='grid-column: span 3; text-align:center; color:#888;'>Este usuario aún no tiene brotes publicados.</p>";
-                } else {
-                    data.publicaciones.forEach(post => {
-                        grid.innerHTML += `<img src="${post.image_url}" class="grid-item">`;
-                    });
-                }
-
-            } catch (error) {
-                console.error("Error al cargar perfil:", error);
-            }
-        }
-
-        cargarDatosPerfil();
-    </script>
+    <script src="js/perfil-usuario.js"></script>
 </body>
 </html>

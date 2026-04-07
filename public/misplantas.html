@@ -1,192 +1,74 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Invernadero | Appiu</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #1a4d2e;
-            --accent: #4ade80;
-            --bg: #f8faf9;
-            --white: #ffffff;
-            --text: #0d2117;
-            --text-light: #64748b;
-            --shadow: 0 10px 25px rgba(0,0,0,0.05);
-        }
-
-        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: var(--text); padding-bottom: 50px; }
-
-        /* HEADER */
-        header {
-            height: 70px; background: var(--white); border-bottom: 1px solid #edf2f0;
-            display: flex; justify-content: space-around; align-items: center;
-            position: sticky; top: 0; z-index: 100;
-        }
-        .brand { font-weight: 800; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-
-        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
-
-        .welcome-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .btn-add { 
-            background: var(--primary); color: white; border: none; padding: 12px 24px; 
-            border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .btn-add:hover { transform: scale(1.05); background: #133a22; }
-
-        /* GRID */
-        .herbario-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
-
-        /* CARD PREMIUM */
-        .plant-card {
-            background: var(--white); border-radius: 24px; overflow: hidden;
-            box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.02);
-            transition: 0.3s ease; position: relative;
-        }
-        .plant-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(26,77,46,0.12); }
-
-        .img-container { width: 100%; aspect-ratio: 1/1; position: relative; }
-        .img-container img { width: 100%; height: 100%; object-fit: cover; }
-
-        .badge {
-            position: absolute; top: 15px; right: 15px; padding: 6px 14px;
-            border-radius: 50px; font-size: 0.7rem; font-weight: 800;
-            backdrop-filter: blur(8px); background: rgba(255,255,255,0.8); color: var(--primary);
-        }
-
-        .info { padding: 20px; }
-        .info h3 { font-size: 1.2rem; margin-bottom: 5px; }
-        .info p { font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; }
-
-        .stats { display: flex; gap: 15px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px; }
-        .stat-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text-light); }
-        .stat-item i { color: var(--primary); }
-
-        /* MODAL */
-        #modal-planta {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 1000;
-            justify-content: center; align-items: center;
-        }
-        .modal-content {
-            background: white; padding: 30px; border-radius: 24px; width: 90%; max-width: 450px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
-        }
-        .modal-content input, .modal-content select {
-            width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #e2e8f0; border-radius: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appiu Garden | Mi Diario Verde</title>
+  <link rel="stylesheet" href="./css/misplantas.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
-    <header>
-        <div class="brand"><i class="fa-solid fa-leaf"></i> Appiu</div>
-        <div style="display: flex; gap: 20px;">
-            <a href="menu.html" style="color: var(--text);"><i class="fa-solid fa-house"></i></a>
-            <a href="perfil.html" style="color: var(--text);"><i class="fa-solid fa-user"></i></a>
+  <a href="menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> Menú Principal</a>
+
+  <div class="main-content-garden">
+    <header class="garden-banner">
+        <div class="banner-content">
+            <h1>Cultivando mi futuro</h1>
+            <p>"Cada brote es una nueva historia"</p>
         </div>
     </header>
 
-    <div class="container">
-        <div class="welcome-section">
-            <div>
-                <h1 style="font-size: 2rem; font-weight: 800;">Mi Invernadero</h1>
-                <p style="color: var(--text-light);">Gestiona y cuida tus descubrimientos botánicos.</p>
-            </div>
-            <button class="btn-add" onclick="toggleModal()"><i class="fa-solid fa-plus"></i> Nueva Planta</button>
-        </div>
-
-        <div class="herbario-grid" id="lista-plantas">
-            </div>
-    </div>
-
-    <div id="modal-planta">
-        <div class="modal-content">
-            <h2 style="margin-bottom: 20px;">Añadir al Herbario</h2>
-            <form id="form-planta">
-                <label>¿Cómo se llama tu planta?</label>
-                <input type="text" name="nombre_comun" placeholder="Ej: Monstera" required>
-                <label>Apodo cariñoso</label>
-                <input type="text" name="apodo" placeholder="Ej: La Gigante">
-                <label>Estado de salud</label>
-                <select name="estado_salud">
-                    <option value="Saludable">✨ Saludable</option>
-                    <option value="Sedienta">💧 Necesita agua</option>
-                    <option value="Necesita Luz">☀️ Falta sol</option>
-                </select>
-                <label>Foto de tu planta</label>
-                <input type="file" name="fotoPlanta" accept="image/*" required>
-                
-                <button type="button" onclick="guardarPlanta()" class="btn-add" style="width: 100%; justify-content: center; margin-top: 15px;">Guardar en Appiu</button>
-                <button type="button" onclick="toggleModal()" style="width:100%; background:none; border:none; color:grey; margin-top:10px; cursor:pointer;">Cancelar</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        const user = JSON.parse(localStorage.getItem("user"));
-        if(!user) window.location.href = "login.html";
-
-        function toggleModal() {
-            const m = document.getElementById("modal-planta");
-            m.style.display = m.style.display === "flex" ? "none" : "flex";
-        }
-
-        async function cargarPlantas() {
-            const grid = document.getElementById("lista-plantas");
-            try {
-                const res = await fetch(`/api/plantas/${user.id}`);
-                const plantas = await res.json();
-
-                if(plantas.length === 0) {
-                    grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px;">
-                        <i class="fa-solid fa-seedling" style="font-size: 3rem; color: #cbd5e0; margin-bottom: 20px;"></i>
-                        <p>Aún no tienes plantas registradas. ¡Añade la primera!</p>
-                    </div>`;
-                    return;
-                }
-
-                grid.innerHTML = plantas.map(p => `
-                    <div class="plant-card">
-                        <div class="img-container">
-                            <span class="badge">${p.estado_salud}</span>
-                            <img src="${p.foto_url || 'https://via.placeholder.com/300'}" alt="Planta">
+    <div class="garden-grid-layout">
+        <aside class="sidebar-form">
+            <div class="appiu-card form-sticky">
+                <div class="card-header">
+                    <h3><i class="fas fa-seedling"></i> Registrar Planta</h3>
+                </div>
+                <form id="plantForm">
+                    <div class="upload-box" id="dropZone">
+                        <input type="file" id="plantImage" accept="image/*" hidden>
+                        <div class="upload-placeholder">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Sube una foto de tu jardín</span>
                         </div>
-                        <div class="info">
-                            <p>${p.nombre_comun}</p>
-                            <h3>${p.apodo || 'Sin apodo'}</h3>
-                            <div class="stats">
-                                <div class="stat-item"><i class="fa-solid fa-droplet"></i> Riego OK</div>
-                                <div class="stat-item"><i class="fa-solid fa-calendar"></i> ${new Date(p.fecha_adopcion || Date.now()).toLocaleDateString()}</div>
-                            </div>
-                        </div>
+                        <img id="preview" src="" style="display:none;">
                     </div>
-                `).join("");
-            } catch (e) { console.error(e); }
-        }
+                    
+                    <div class="input-stack">
+                        <label>Nombre del brote</label>
+                        <input type="text" id="plantName" placeholder="Ej. Orquídea Real" class="appiu-input" required>
+                        
+                        <label>Ubicación</label>
+                        <select id="plantType" class="appiu-input">
+                            <option value="Interior">Interior</option>
+                            <option value="Exterior">Exterior</option>
+                            <option value="Huerto">Huerto / Frutal</option>
+                        </select>
+                    </div>
 
-        async function guardarPlanta() {
-            const form = document.getElementById("form-planta");
-            const formData = new FormData(form);
-            formData.append("usuario_id", user.id);
-            formData.append("fecha_adopcion", new Date().toISOString().split('T')[0]);
+                    <button type="submit" class="btn-publish">
+                        <i class="fas fa-leaf"></i> Plantar Brote
+                    </button>
+                </form>
+            </div>
+        </aside>
 
-            try {
-                const res = await fetch('/api/plantas', { method: 'POST', body: formData });
-                const data = await res.json();
-                if(data.success) {
-                    alert("¡Planta añadida con éxito! 🌿");
-                    toggleModal();
-                    cargarPlantas();
-                }
-            } catch (e) { alert("Error al conectar"); }
-        }
+        <main class="plants-feed">
+            <div class="feed-header">
+                <h2>Mis Brotes Activos</h2>
+                <div class="filter-pills">
+                    <button class="pill active">Todas</button>
+                    <button class="pill">Saludables</button>
+                    <button class="pill">Necesitan Agua</button>
+                </div>
+            </div>
+            
+            <div id="plantsGrid" class="appiu-feed-grid"></div>
+        </main>
+    </div>
+</div>
 
-        cargarPlantas();
-    </script>
+  <script src="./js/misplantas.js"></script>
 </body>
 </html>
