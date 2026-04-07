@@ -35,28 +35,68 @@ async function inicializarVista() {
     }
 }
 
+// Función para obtener datos frescos de la DB
+async function cargarDatosPerfil() {
+    const userLocal = JSON.parse(localStorage.getItem("user"));
+    if (!userLocal) return;
+
+    try {
+        // Pedimos los datos reales al servidor usando el ID del localStorage
+        const response = await fetch(`/api/usuarios/${userLocal.id}`);
+        const datosReales = await response.json();
+
+        if (datosReales && !datosReales.error) {
+            // 1. Actualizamos los textos en el HTML
+            document.getElementById("nombre-usuario").innerText = `@${datosReales.username}`;
+            document.getElementById("bio-usuario").innerText = datosReales.expert_bio || "Sin biografía aún...";
+            
+            // 2. Corregimos la ruta de la foto
+            let foto = datosReales.foto_perfil;
+            if (foto && !foto.startsWith('http') && !foto.startsWith('/')) {
+                foto = `/uploads/${foto}`;
+            }
+            document.getElementById("foto-perfil-v").src = foto || "/img/default-avatar.png";
+
+            // 3. (Opcional) Actualizamos el localStorage para que el resto de la App sepa el cambio
+            localStorage.setItem("user", JSON.stringify(datosReales));
+        }
+    } catch (error) {
+        console.error("Error al traer datos del perfil:", error);
+    }
+}
+
+// Ejecutar al cargar la página
+window.onload = cargarDatosPerfil;
+
 // Función auxiliar para actualizar la interfaz con datos frescos
 function actualizarInterfazUsuario(info) {
+    // 1. Nombres: Usamos username para el display y el título
     document.getElementById('username-display').innerText = `@${info.username}`;
-    document.getElementById('nombre-completo').innerText = info.nombre_completo || info.username;
-    document.getElementById('bio-text').innerText = info.biografia || "Cultivando mi historia verde... 🌿";
+    document.getElementById('nombre-completo').innerText = info.username; 
     
-    // Contadores reales de la base de datos
+    // 2. Bio: Tu columna real se llama expert_bio
+    document.getElementById('bio-text').innerText = info.expert_bio || "Cultivando mi historia verde... 🌿";
+    
+    // 3. Contadores: Ahora sí llegarán como seguidores_count y seguidos_count
     document.getElementById('count-seguidores').innerText = info.seguidores_count || 0;
     document.getElementById('count-seguidos').innerText = info.seguidos_count || 0;
     
-    // LÓGICA DE LA FOTO:
-    // Si la foto empieza con 'http', se usa tal cual. 
-    // Si es solo un nombre de archivo (ej: 'perfil-123.jpg'), le ponemos el prefijo /uploads/
-    let urlFoto = `https://api.dicebear.com/7.x/bottts/svg?seed=${info.username}`; // Default
+
+    // 4. Foto de Perfil:
+    let urlFoto = `https://api.dicebear.com/7.x/bottts/svg?seed=${info.username}`;
     
-    if (info.foto_perfil && info.foto_perfil !== 'null' && info.foto_perfil !== '') {
-        urlFoto = info.foto_perfil.startsWith('http') 
-                  ? info.foto_perfil 
-                  : `/uploads/${info.foto_perfil}`;
+    if (info.foto_perfil && info.foto_perfil !== 'null') {
+        // Si ya trae '/uploads/', lo usamos directo. Si no, se lo ponemos.
+        urlFoto = info.foto_perfil.includes('/uploads/') 
+            ? info.foto_perfil 
+            : `/uploads/${info.foto_perfil}`;
     }
     
-    document.getElementById('pfp-grande').src = urlFoto;
+    const pfpGrande = document.getElementById('pfp-grande');
+    if (pfpGrande) pfpGrande.src = urlFoto;
+
+// IMPORTANTE: Limpiar posibles dobles barras por si acaso
+    document.getElementById('pfp-grande').src = urlFoto.replace(/\/\/+/g, '/').replace('http:/', 'http://');
 }
 
 // Carga y renderiza la cuadrícula de publicaciones
@@ -118,8 +158,7 @@ function cerrarModalEdicion() {
 
 function llenarFormularioEdicion(info) {
     document.getElementById('edit-username').value = info.username;
-    document.getElementById('edit-nombre').value = info.nombre_completo || "";
-    document.getElementById('edit-bio').value = info.biografia || "";
+    document.getElementById('edit-bio').value = info.expert_bio || "";
 }
 
 // Manejar el submit del formulario de edición

@@ -23,31 +23,28 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// En server.js (Ruta de actualización)
 app.post('/api/usuarios/actualizar/:id', upload.single('foto_perfil'), async (req, res) => {
     const userId = req.params.id;
-    const { username, nombre_completo, biografia } = req.body;
-    let foto_perfil = req.file ? req.file.filename : null;
+    const { username, expert_bio } = req.body; 
+    const foto = req.file ? `/uploads/${req.file.filename}` : null;
 
     try {
-        // Si hay foto nueva, actualizamos todo. Si no, solo los textos.
-        if (foto_perfil) {
-            await db.query(
-                "UPDATE users SET username = ?, nombre_completo = ?, biografia = ?, foto_perfil = ? WHERE id = ?",
-                [username, nombre_completo, biografia, foto_perfil, userId]
-            );
+        if (foto) {
+            // 1. Actualiza el usuario
+            await db.query("UPDATE users SET username = ?, expert_bio = ?, foto_perfil = ? WHERE id = ?", [username, expert_bio, foto, userId]);
+            
+            // 2. ¡VITAL! Actualiza la foto en todas sus publicaciones antiguas
+            // Asegúrate de que el nombre de la columna sea 'foto_perfil' o 'user_pfp' según tu tabla posts
+            await db.query("UPDATE posts SET foto_perfil = ? WHERE user_id = ?", [foto, userId]); 
         } else {
-            await db.query(
-                "UPDATE users SET username = ?, nombre_completo = ?, biografia = ? WHERE id = ?",
-                [username, nombre_completo, biografia, userId]
-            );
+            await db.query("UPDATE users SET username = ?, expert_bio = ? WHERE id = ?", [username, expert_bio, userId]);
         }
-        res.json({ success: true, nuevaFoto: foto_perfil });
+        res.json({ success: true, message: "¡Perfil y publicaciones actualizados! 🌿" });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ error: error.message });
     }
 });
-
 
 // 1. Middlewares de lectura (SIEMPRE PRIMERO)
 app.use(express.json());
@@ -183,11 +180,15 @@ app.post('/api/usuarios/follow', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/plantas', (req, res) => {
-    db.query('SELECT * FROM explorar_plantas', (err, results) => {
-        if (err) return res.status(500).send(err);
+// NUEVA RUTA CORREGIDA
+app.get('/api/plantas', async (req, res) => {
+    try {
+        const [results] = await db.query('SELECT * FROM explorar_plantas');
         res.json(results);
-    });
+    } catch (err) {
+        console.error("❌ Error en la consulta de plantas:", err.message);
+        res.status(500).json({ error: "Error del servidor", detalle: err.message });
+    }
 });
 
 // CONTADORES DE PERFIL
@@ -230,27 +231,39 @@ app.get('/api/publicaciones/usuario/:id', async (req, res) => {
     }
 });
 
+// Esta ruta ya existe en tu server.js
 app.get('/api/usuarios/:id', async (req, res) => {
     const userId = req.params.id;
     try {
-        // Esta consulta trae los datos del usuario + el conteo de sus seguidores y seguidos
+        const sql = `
+            SELECT u.id, u.username, u.foto_perfil, u.expert_bio, u.is_expert,
+            (SELECT COUNT(*) FROM seguidores WHERE id_seguido = u.id) AS seguidores_count,
+            (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = u.id) AS seguidos_count
+            FROM users u WHERE u.id = ?`;
+        const [rows] = await db.query(sql, [userId]);
+        if (rows.length > 0) res.json(rows[0]);
+        else res.status(404).json({ error: "Usuario no encontrado" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Busca esta ruta en server.js y reemplázala
+app.get('/api/publicaciones/:id', async (req, res) => {
+    try {
         const sql = `
             SELECT 
-                u.id, u.username, u.foto_perfil, u.biografia, u.nombre_completo,
-                (SELECT COUNT(*) FROM seguidores WHERE id_seguido = u.id) AS seguidores_count,
-                (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = u.id) AS seguidos_count
-            FROM users u
-            WHERE u.id = ?`;
-        
-        const [rows] = await db.query(sql, [userId]);
-
-        if (rows.length > 0) {
-            res.json(rows[0]);
-        } else {
-            res.status(404).json({ error: "Usuario no encontrado" });
-        }
+                p.*, 
+                u.username AS nombre_real, 
+                u.foto_perfil AS foto_real
+            FROM posts p
+            JOIN users u ON p.user_id = u.id
+            ORDER BY p.id DESC`;
+            
+        const [rows] = await db.query(sql);
+        res.json(rows);
     } catch (error) {
-        console.error("Error al obtener perfil:", error);
+        console.error("Error en SQL del feed:", error);
         res.status(500).json({ error: error.message });
     }
 });

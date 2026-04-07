@@ -40,11 +40,17 @@ router.post('/registro', upload.single('foto_perfil'), async (req, res) => {
     }
 });
 
-// ESTA ES LA RUTA QUE TE FALTA O ESTÁ FALLANDO
+// UNIFICADA: Obtener info detallada del usuario con contadores
 router.get('/:id', async (req, res) => {
     const userId = req.params.id;
     try {
-        const [rows] = await db.query('SELECT id, username, email, foto_perfil, is_expert, expert_bio FROM users WHERE id = ?', [userId]);
+        const sql = `
+            SELECT u.id, u.username, u.email, u.expert_bio, u.foto_perfil, u.is_expert, u.expert_bio,
+            (SELECT COUNT(*) FROM seguidores WHERE id_seguido = u.id) as seguidores_count,
+            (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = u.id) as seguidos_count
+            FROM users u WHERE u.id = ?`;
+        
+        const [rows] = await db.query(sql, [userId]);
         
         if (rows.length > 0) {
             res.json(rows[0]);
@@ -52,6 +58,7 @@ router.get('/:id', async (req, res) => {
             res.status(404).json({ error: "Usuario no encontrado" });
         }
     } catch (error) {
+        console.error("Error en GET /usuarios/:id:", error);
         res.status(500).json({ error: error.message });
     }
 });

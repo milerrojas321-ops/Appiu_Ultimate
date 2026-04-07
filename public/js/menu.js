@@ -3,10 +3,43 @@ const user = JSON.parse(localStorage.getItem("user"));
 const ICONO_DEFECTO = '/img/icono.jpg';
 let currentPostId = null;
 
-if (user) {
-    document.getElementById("mini-username").innerText = `@${user.username}`;
-    document.getElementById("mini-pfp").src = user.foto_perfil || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}`;
+async function sincronizarUsuario() {
+    const userLocal = JSON.parse(localStorage.getItem("user"));
+    if (!userLocal) return;
+
+    try {
+        const res = await fetch(`/api/usuarios/${userLocal.id}`);
+        const datosActualizados = await res.json();
+
+        if (datosActualizados && !datosActualizados.error) {
+            // Actualizamos el localStorage con la info real de la DB
+            localStorage.setItem("user", JSON.stringify(datosActualizados));
+            
+            // Actualizamos la UI
+            document.getElementById("mini-username").innerText = `@${datosActualizados.username}`;
+            
+            let foto = datosActualizados.foto_perfil;
+            if (foto && !foto.startsWith('/') && !foto.startsWith('http')) foto = `/uploads/${foto}`;
+            document.getElementById("mini-pfp").src = foto || `https://api.dicebear.com/7.x/bottts/svg?seed=${datosActualizados.username}`;
+        }
+    } catch (e) {
+        console.error("Error al sincronizar usuario:", e);
+    }
 }
+
+// Llama a esta función al final de tu inicialización
+sincronizarUsuario();
+
+if (user) {
+    let fotoUrl = user.foto_perfil;
+    if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('/uploads')) {
+        fotoUrl = `/uploads/${fotoUrl}`;
+    }
+    
+    document.getElementById("mini-pfp").src = fotoUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}`;
+}
+    
+
 
 // --- FUNCIONES DE INTERFAZ ---
 function openModal() { document.getElementById('modalPost').classList.add('open'); }
@@ -27,25 +60,37 @@ async function cargarFeed() {
         feed.innerHTML = "";
 
         if(posts.length === 0) {
-            feed.innerHTML = `<p style="text-align:center; color:#888; margin-top:50px; background:white; padding:30px; border-radius:20px;">Aún no hay brotes en el feed. ¡Sé el primero en publicar!</p>`;
+            feed.innerHTML = `<p style="text-align:center; color:#888; margin-top:50px;">Aún no hay brotes.</p>`;
             return;
         }
 
         posts.forEach(post => {
-            const fotoAutor = post.foto_perfil ? post.foto_perfil : `https://api.dicebear.com/7.x/bottts/svg?seed=${post.username}`;
+            // 1. Prioridad: Datos del JOIN -> Datos del post -> "Usuario"
+            const nombreAutor = post.nombre_real || post.username || "Usuario";
+            
+            // 2. Lógica de la Foto de Perfil
+            let fotoAutor = post.foto_real || post.foto_perfil;
+            if (fotoAutor && !fotoAutor.startsWith('http') && !fotoAutor.startsWith('/')) {
+                fotoAutor = `/uploads/${fotoAutor}`;
+            }
+            
+            // Si tiene foto la usa, si no, usa el icono local (sin robots aleatorios)
+            const imgFinal = fotoAutor ? fotoAutor : '/img/icono.jpg'; 
             const claseLikeIcon = post.loLikeo > 0 ? "fa-solid active-like" : "fa-regular";
 
             feed.innerHTML += `
             <article class="post-card" id="post-${post.id}">
                 <div class="post-header" onclick="verPerfil(${post.user_id})" style="cursor:pointer;">
-                    <img src="${fotoAutor}" class="user-pfp" alt="${post.username}">
+                    <img src="${imgFinal}" class="user-pfp" alt="${nombreAutor}">
                     <div>
-                        <b style="font-size:0.95rem; color:var(--text);">${post.username}</b>
-                        <small style="color:var(--text-light); display:block; font-size:0.75rem; margin-top:2px;">${new Date(post.created_at).toLocaleDateString()}</small>
+                        <b style="font-size:0.95rem; color:var(--text);">${nombreAutor}</b>
+                        <small style="color:var(--text-light); display:block; font-size:0.75rem; margin-top:2px;">
+                            ${new Date(post.created_at).toLocaleDateString()}
+                        </small>
                     </div>
                 </div>
                 <div class="post-image-container">
-                    <img src="${post.image_url}" class="post-image" alt="Planta de ${post.plant_name}">
+                    <img src="${post.image_url}" class="post-image">
                 </div>
                 <div class="post-body">
                     <h4 style="color:var(--primary); font-weight:800;">🌿 ${post.plant_name}</h4>
@@ -67,7 +112,7 @@ async function cargarFeed() {
                 </div>
             </article>`;
         });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error cargando feed:", e); }
 }
 
 async function cargarSugerencias() {
