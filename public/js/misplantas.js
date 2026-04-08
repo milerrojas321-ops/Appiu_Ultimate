@@ -6,7 +6,7 @@ const plantsGrid = document.getElementById('plantsGrid');
 // 1. Cargar Plantas desde BD
 async function cargarMisPlantas() {
     try {
-        const res = await fetch(`/api/mis-plantas/${user.id}`);
+        const res = await fetch(`/api/plantas/usuario/${user.id}`);
         const plantas = await res.json();
         renderizarPlantas(plantas);
         actualizarStats(plantas.length);
@@ -27,8 +27,9 @@ function renderizarPlantas(plantas) {
         card.className = `plant-card ${necesitaAgua ? 'alert-water' : ''}`;
         
         // CORRECCIÓN 1: Usar 'foto_url' que es el nombre en tu tabla coleccion_plantas
+        // Cambio en la función renderizarPlantas
         const imgUrl = p.foto_url 
-            ? (p.foto_url.startsWith('http') ? p.foto_url : p.foto_url) 
+            ? (p.foto_url.startsWith('http') ? p.foto_url : `/uploads/${p.foto_url}`) 
             : '/img/default-plant.jpg';
 
         card.innerHTML = `
@@ -61,6 +62,31 @@ function renderizarPlantas(plantas) {
         `;
         plantsGrid.appendChild(card);
     });
+}
+
+
+async function eliminarPlanta(id) {
+    if (!confirm("¿Estás seguro de que quieres arrancar esta planta de tu jardín?")) return;
+
+    try {
+        // La URL debe incluir el prefijo '/api/plantas' definido en server.js
+        const res = await fetch(`/api/plantas/eliminar/${id}`, {
+            method: 'DELETE'
+        });
+
+        // Verificamos si la respuesta es exitosa antes de procesar el JSON
+        if (res.ok) {
+            const resultado = await res.json();
+            alert("Planta eliminada correctamente");
+            cargarMisPlantas(); // Recarga la cuadrícula para reflejar el cambio
+        } else {
+            const errorData = await res.json();
+            alert("Error del servidor: " + (errorData.message || "No se pudo eliminar"));
+        }
+    } catch (e) {
+        console.error("Error en la petición DELETE:", e);
+        alert("No se pudo conectar con el servidor.");
+    }
 }
 
 // 3. Manejo de Imagen y Formulario
@@ -108,6 +134,19 @@ plantForm.onsubmit = async (e) => {
         }
     } catch (err) { alert("Error al plantar"); }
 };
+
+// misplantas.js
+
+function regarPlanta(id) {
+    // Por ahora, simulamos el riego visualmente
+    alert("¡Planta hidratada! 💧");
+    
+    // Aquí podrías añadir un fetch si quieres guardar la fecha de riego en la BD
+    console.log("Regando planta con ID:", id);
+    
+    // Opcional: Recargar la lista para actualizar el estado visual
+    cargarMisPlantas();
+}
 
 // misplantas.js
 const botonesFiltro = document.querySelectorAll('.filter-btn'); // Asegúrate de que tengan esta clase en el HTML

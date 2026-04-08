@@ -64,6 +64,7 @@
             <form id="plantForm" enctype="multipart/form-data">
                 <div class="upload-area" id="dropZone">
                     <input type="file" id="plantImage" name="imagen" accept="image/*" hidden>
+                    
                     <div id="preview-container">
                         <i class="fa-solid fa-camera"></i>
                         <p>Subir foto</p>
@@ -139,19 +140,5 @@
 </div>
 
 <script src="js/misplantas.js"></script>
-<script>
-    // Función para cerrar el modal
-    function cerrarModal() {
-        document.getElementById('plantModal').style.display = 'none';
-    }
-
-    // Cerrar modal si se hace clic fuera de la caja blanca
-    window.onclick = function(event) {
-        let modal = document.getElementById('plantModal');
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
-</script>
 </body>
 </html>

@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
-require('dotenv').config();
 
+// Creamos un "pool" de conexiones, que es más eficiente para aplicaciones web
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',      // Tu usuario de MySQL
-    password: '',      // Tu contraseña
-    database: 'appiu_bd', // El nombre de la BD que creaste
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',      // Tu usuario de MySQL
+    password: process.env.DB_PASSWORD || '',   // Tu contraseña de MySQL
+    database: process.env.DB_NAME || 'appiu_bd', // El nombre de tu base de datos
     waitForConnections: true,
-    connectionLimit: 10
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
+// Exportamos el pool configurado para usar promesas (async/await)
 module.exports = pool.promise();
-
-
 
 
 

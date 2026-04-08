@@ -225,42 +225,49 @@ async function abrirComentarios(postId) {
 
 // menu.js
 async function cargarComentarios(postId) {
-    currentPostId = postId; // Guardamos el ID para saber dónde publicar
+    currentPostId = postId; 
     const list = document.getElementById('commentsList');
     const panel = document.getElementById('commentsPanel');
     
     if (!list || !panel) return;
     
-    panel.classList.add('active'); // Abrir el panel
-    list.innerHTML = "<p style='text-align:center;'>Cargando...</p>";
+    panel.classList.add('active'); 
+    list.innerHTML = "<p style='text-align:center;'>Cargando comentarios...</p>";
 
     try {
+        // 1. URL CORREGIDA: Debe coincidir con el router.get de publicaciones.js
+        // Según tu server.js es: /api/publicaciones/:id/comentarios
         const res = await fetch(`/api/publicaciones/${postId}/comentarios`);
-        const comments = await res.json();
         
+        if (!res.ok) throw new Error("Error en la respuesta");
+        
+        const comments = await res.json();
         list.innerHTML = "";
 
         if (comments.length === 0) {
-            list.innerHTML = "<p style='text-align:center; color:#888; padding:20px;'>Aún no hay brotes en esta conversación.</p>";
+            list.innerHTML = "<p style='text-align:center; color:#888; padding:20px;'>Aún no hay brotes en esta conversación. 🌱</p>";
             return;
         }
 
         comments.forEach(c => {
-            let foto = c.foto_perfil || '/img/icono.jpg';
-            if (foto && !foto.startsWith('http') && !foto.startsWith('/')) foto = `/uploads/${foto}`;
+            // 2. RUTA DE IMAGEN: Usamos /uploads/ para que no de 404
+            let foto = c.foto_perfil ? (c.foto_perfil.startsWith('/') ? c.foto_perfil : `/uploads/${c.foto_perfil}`) : '/img/icono.jpg';
 
             list.innerHTML += `
                 <div style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start;">
-                    <img src="${foto}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">
+                    <img src="${foto}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;" 
+                         onerror="this.src='/img/icono.jpg'">
                     <div style="background:#f0f2f5; padding:10px; border-radius:15px; flex:1;">
-                        <b style="font-size:0.85rem; color:var(--primary);">@${c.username || 'Usuario'}</b>
+                        <b style="font-size:0.85rem; color:green;">@${c.username || 'Usuario'}</b>
                         <p style="margin:2px 0 0 0; font-size:0.9rem;">${c.texto}</p>
                     </div>
                 </div>`;
         });
+        
         list.scrollTop = list.scrollHeight;
     } catch (e) {
-        list.innerHTML = "<p>Error al cargar comentarios.</p>";
+        console.error("Error al cargar:", e);
+        list.innerHTML = "<p style='text-align:center; color:red;'>Error al conectar con la raíz del servidor.</p>";
     }
 }
 
@@ -272,21 +279,29 @@ async function enviarComentario(event, btn) {
     if(!texto) return;
 
     try {
-        const res = await fetch('/api/comentarios', {
+        // 1. CAMBIO DE URL: Agregamos /publicaciones
+        const res = await fetch('/api/publicaciones/comentarios', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                usuario_id: user.id, 
-                publicacion_id: currentPostId, // Este es el ID del post abierto
-                contenido: texto 
+                // 2. CAMBIO DE NOMBRES: Usamos los que espera tu controlador/tabla
+                post_id: currentPostId, 
+                user_id: user.id, 
+                username: user.username, // Tu tabla pide el username
+                texto: texto             // En la base de datos se llama 'texto'
             })
         });
 
         if (res.ok) {
-            document.getElementById('comment-text').value = ""; // Limpiar input
-            cargarComentarios(currentPostId); // Recargar lista
+            document.getElementById('comment-text').value = ""; 
+            // 3. CAMBIO DE URL EN CARGAR: También debe llevar /publicaciones
+            cargarComentarios(currentPostId); 
+        } else {
+            console.error("Error en la respuesta del servidor");
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error("Error en el fetch:", e); 
+    }
 }
 
 document.getElementById('form-publicar').addEventListener('submit', async (e) => {

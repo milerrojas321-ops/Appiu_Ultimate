@@ -29,6 +29,35 @@ router.get('/:userId', async (req, res) => {
     }
 });
 
+router.get('/:userId', async (req, res) => {
+    try {
+        const sql = `SELECT p.*, u.foto_perfil as user_pfp FROM posts p JOIN users u ON p.user_id = u.id ORDER BY p.created_at DESC`;
+        const [rows] = await db.query(sql, [req.params.userId]);
+        
+        const rowsCorregidas = rows.map(post => ({
+            ...post,
+            // Si la imagen existe y no tiene el prefijo, se lo ponemos
+            image_url: post.image_url ? (post.image_url.startsWith('/') ? post.image_url : `/uploads/${post.image_url}`) : null,
+            user_pfp: post.user_pfp ? (post.user_pfp.startsWith('/') ? post.user_pfp : `/uploads/${post.user_pfp}`) : '/img/default-avatar.png'
+        }));
+        
+        res.json(rowsCorregidas);
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// routes/publicaciones.js
+router.get('/usuario/:id', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        // Seleccionamos los posts donde el user_id coincida con el perfil abierto
+        const query = 'SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC';
+        const [rows] = await db.query(query, [userId]);
+        res.json(rows); // Esto envía el JSON limpio que el frontend espera
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // OBTENER POSTS
 router.get('/:userId', async (req, res) => {
     const userId = req.params.userId;
@@ -120,6 +149,35 @@ router.get('/:userId', async (req, res) => {
         
         res.json(cleanRows);
     } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// --- GESTIÓN DE COMENTARIOS ---
+
+// 1. OBTENER COMENTARIOS DE UN POST
+// Cambiamos 'app.get' por 'router.get'
+router.get('/comentarios/:post_id', async (req, res) => {
+    const { post_id } = req.params;
+    try {
+        const [rows] = await db.query(
+            'SELECT * FROM comentarios WHERE post_id = ? ORDER BY created_at ASC', 
+            [post_id]
+        );
+        res.json(rows);
+    } catch (err) {
+        res.status(500).send("Error al obtener comentarios: " + err.message);
+    }
+});
+
+// routes/publicaciones.js
+router.post('/comentarios', async (req, res) => {
+    const { post_id, user_id, username, texto } = req.body;
+    try {
+        const sql = 'INSERT INTO comentarios (post_id, user_id, username, texto) VALUES (?, ?, ?, ?)';
+        await db.query(sql, [post_id, user_id, username, texto]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 

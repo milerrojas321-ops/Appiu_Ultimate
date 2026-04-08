@@ -116,6 +116,39 @@ router.post('/actualizar', upload.single('fotoPerfil'), async (req, res) => {
     }
 });
 
+// routes/publicaciones.js
+// Obtener publicaciones de un usuario específico para su perfil
+router.get('/usuario/:id', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        // Buscamos en la tabla 'posts' filtrando por el 'user_id'
+        const query = 'SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC';
+        const [rows] = await db.query(query, [userId]);
+        
+        // Enviamos los datos como JSON real
+        res.json(rows); 
+    } catch (error) {
+        console.error("Error en DB:", error);
+        res.status(500).json({ error: "Error al obtener publicaciones del perfil" });
+    }
+});
+
+
+router.get('/:id', async (req, res) => {
+    try {
+        const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [req.params.id]);
+        if (rows.length > 0) {
+            let user = rows[0];
+            if (user.foto_perfil && !user.foto_perfil.startsWith('/')) {
+                user.foto_perfil = `/uploads/${user.foto_perfil}`;
+            }
+            res.json(user);
+        } else {
+            res.status(404).json({ error: "No encontrado" });
+        }
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // --- OBTENER PERFIL ---
 router.get('/perfil/:id', async (req, res) => {
     const userId = req.params.id;
@@ -127,7 +160,6 @@ router.get('/perfil/:id', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
 
 
 
