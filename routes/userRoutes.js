@@ -13,4 +13,8 @@ router.get('/sugerencias/:idLogueado', async (req, res) => {
     res.json(rows);
 });
 
+// routes/userRoutes.js
+// Asegúrate de que coincida con lo que el frontend espera
+router.post('/actualizar/:id', userController.actualizarPerfil);
+
 module.exports = router;

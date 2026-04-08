@@ -117,24 +117,37 @@ async function cargarFeed() {
 
 async function cargarSugerencias() {
     const lista = document.getElementById("lista-sugerencias");
-    if (!lista || !user) return; 
+    // Verificamos que existan la lista y el usuario logueado
+    if (!lista || !user || !user.id) return; 
 
     try {
+        // La URL debe ser exacta a como la definiste en server.js (/api/usuarios)
         const res = await fetch(`/api/usuarios/sugerencias/${user.id}`); 
+        
+        // --- VALIDACIÓN CRÍTICA ---
+        // Si el servidor responde 404 (Not Found), nos detenemos aquí
+        if (!res.ok) {
+            console.warn("La ruta de sugerencias no respondió correctamente:", res.status);
+            return;
+        }
+
         const usuarios = await res.json();
         lista.innerHTML = ""; 
 
+        // Si no hay usuarios en la base de datos
+        if (usuarios.length === 0) {
+            lista.innerHTML = "<p style='padding:10px; font-size:12px; color:#666;'>No hay sugerencias</p>";
+            return;
+        }
+
         usuarios.forEach(u => {
-            // 1. Intentamos armar la ruta a tu carpeta local de subidas
             let fotoFinal = u.foto_perfil;
             
+            // Ajuste de ruta para imágenes locales
             if (fotoFinal && !fotoFinal.startsWith('http') && !fotoFinal.startsWith('/')) {
-                // Esto asegura que busque en public/uploads/perfil-xxx.jpg
                 fotoFinal = `/uploads/${fotoFinal}`;
             }
 
-            // 2. LA CLAVE: Si no tiene foto, usamos tu archivo local
-            // Asegúrate de tener una imagen en: public/img/usuario-defecto.png
             const imagen = fotoFinal || '/img/icono.jpg'; 
             
             const textoBoton = u.loSigo > 0 ? "Siguiendo" : "Seguir";
@@ -152,16 +165,28 @@ async function cargarSugerencias() {
                 </div>`;
         });
     } catch (e) { 
+        // Este catch ahora solo atrapará errores reales de conexión, no errores de formato
         console.error("Error en cargarSugerencias:", e); 
     }
 }
 
+
 async function cargarNotificaciones() {
+    const contenedor = document.getElementById('lista-notificaciones');
+    // Validación de seguridad inicial
+    if (!contenedor || !user || !user.id) return;
+
     try {
-        const res = await fetch(`/api/notificaciones/${user.id}`);
+        // 1. URL corregida con el prefijo /api/usuarios
+        const res = await fetch(`/api/usuarios/notificaciones/${user.id}`);
+        
+        // 2. Validación de respuesta para evitar error de "Unexpected token <"
+        if (!res.ok) {
+            console.warn("No se pudieron cargar las notificaciones:", res.status);
+            return;
+        }
+
         const notis = await res.json();
-        const contenedor = document.getElementById('lista-notificaciones');
-        if (!contenedor) return;
 
         if(notis.length === 0) {
             contenedor.innerHTML = `<p style="text-align:center; color:#bbb; font-size:0.8rem; padding:20px 0;">No hay actividad nueva.</p>`;
@@ -170,16 +195,31 @@ async function cargarNotificaciones() {
 
         contenedor.innerHTML = "";
         notis.forEach(n => {
-            const fotoEmi = n.foto_perfil || `https://api.dicebear.com/7.x/bottts/svg?seed=${n.nombre_emisor}`;
+            // 3. Gestión de imagen de perfil (Prioriza local -> Fallback icono)
+            let fotoEmi = n.foto_perfil;
+            if (fotoEmi && !fotoEmi.startsWith('http') && !fotoEmi.startsWith('/')) {
+                fotoEmi = `/uploads/${fotoEmi}`;
+            }
+            const fotoFinal = fotoEmi || '/img/icono.jpg';
+
             let texto = "";
             let iconoClass = "";
-            if(n.tipo === 'like') { texto = "le dio me gusta a tu planta."; iconoClass = "fa-heart active-like"; }
-            else if(n.tipo === 'comment') { texto = "comentó tu publicación."; iconoClass = "fa-comment"; }
-            else if(n.tipo === 'follow') { texto = "comenzó a seguirte."; iconoClass = "fa-user-plus"; }
+            
+            // Lógica de tipos de notificación
+            if(n.tipo === 'like') { 
+                texto = "le dio me gusta a tu planta."; 
+                iconoClass = "fa-heart active-like"; 
+            } else if(n.tipo === 'comment') { 
+                texto = "comentó tu publicación."; 
+                iconoClass = "fa-comment"; 
+            } else if(n.tipo === 'follow') { 
+                texto = "comenzó a seguirte."; 
+                iconoClass = "fa-user-plus"; 
+            }
 
             contenedor.innerHTML += `
                 <div class="noti-item">
-                    <img src="${fotoEmi}" class="noti-pfp">
+                    <img src="${fotoFinal}" class="noti-pfp" onerror="this.src='/img/icono.jpg'">
                     <div class="noti-text">
                         <b>${n.nombre_emisor}</b> ${texto}
                         <span class="noti-time">${new Date(n.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
@@ -187,7 +227,9 @@ async function cargarNotificaciones() {
                     <i class="fa-solid ${iconoClass}" style="margin-left:auto; font-size:0.8rem;"></i>
                 </div>`;
         });
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error("Error en cargarNotificaciones:", e); 
+    }
 }
 
 // --- EVENTOS Y OTROS ---

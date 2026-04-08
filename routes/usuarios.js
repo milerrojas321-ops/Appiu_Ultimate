@@ -40,6 +40,16 @@ router.post('/registro', upload.single('foto_perfil'), async (req, res) => {
     }
 });
 
+// routes/publicaciones.js
+
+router.get('/:id/comentarios', async (req, res) => {
+    try {
+        const sql = "SELECT c.*, u.username, u.foto_perfil FROM comentarios c LEFT JOIN users u ON c.user_id = u.id WHERE c.post_id = ? ORDER BY c.id ASC";
+        const [rows] = await db.query(sql, [req.params.id]);
+        res.json(rows); 
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // UNIFICADA: Obtener info detallada del usuario con contadores
 router.get('/:id', async (req, res) => {
     const userId = req.params.id;
@@ -214,6 +224,37 @@ router.post('/follow', async (req, res) => {
         console.error("ERROR EN TOGGLE FOLLOW:", error);
         res.status(500).json({ success: false, error: error.message });
     }
+});
+
+// --- RUTA: SUGERENCIAS ---
+router.get('/sugerencias/:idLogueado', async (req, res) => {
+    const idLogueado = req.params.idLogueado;
+    try {
+        const query = `
+            SELECT id, username, foto_perfil, 
+            (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = ? AND id_seguido = u.id) as loSigo
+            FROM users u WHERE id != ? ORDER BY RAND() LIMIT 5`;
+        const [rows] = await db.query(query, [idLogueado, idLogueado]);
+        
+        const procesados = rows.map(u => ({
+            ...u,
+            foto_perfil: u.foto_perfil ? (u.foto_perfil.startsWith('/') ? u.foto_perfil : `/uploads/${u.foto_perfil}`) : '/img/icono.jpg'
+        }));
+        res.json(procesados);
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// --- RUTA: NOTIFICACIONES ---
+router.get('/notificaciones/:userId', async (req, res) => {
+    try {
+        const sql = `
+            SELECT n.*, u.username as nombre_emisor, u.foto_perfil 
+            FROM notificaciones n
+            JOIN users u ON n.id_emisor = u.id
+            WHERE n.id_receptor = ? ORDER BY n.id DESC LIMIT 15`;
+        const [rows] = await db.query(sql, [req.params.userId]);
+        res.json(rows);
+    } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 module.exports = router;
