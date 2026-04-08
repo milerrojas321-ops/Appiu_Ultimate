@@ -4,52 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explorar Plantas | Appiu</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/plantas.css">
 </head>
 <body>
 
-<header class="appiu-header">
-    <div class="header-left">
-        <div class="logo-circle" onclick="location.href='menu.html'">
-            <i class="fa-solid fa-arrow-left"></i>
+<header class="main-header">
+    <div class="nav-top">
+        <div class="back-btn" onclick="location.href='menu.html'">
+            <i class="fa-solid fa-chevron-left"></i>
         </div>
-        <h1>Explorar</h1>
+        <div class="header-title">
+            <h1>Explorar</h1>
+            <span>Descubre tu próximo brote</span>
+        </div>
     </div>
-    <div class="search-container">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="buscar" placeholder="Busca tu próximo brote..." onkeyup="filtrar()">
+    
+    <div class="search-bar-container">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="buscar" placeholder="¿Qué planta buscas hoy?" onkeyup="filtrar()">
+        </div>
     </div>
 </header>
 
-<nav class="categories">
-    <button class="pill active" onclick="filtrarCategoria('Todas')">Todas</button>
-    <button class="pill" onclick="filtrarCategoria('Interior')">Interior</button>
-    <button class="pill" onclick="filtrarCategoria('Suculenta')">Suculentas</button>
-    <button class="pill" onclick="filtrarCategoria('Exterior')">Exterior</button>
+<nav class="filter-chips">
+    <button class="chip active" onclick="filtrarCategoria('Todas', event)">Todas</button>
+    <button class="chip" onclick="filtrarCategoria('Interior', event)">Interior</button>
+    <button class="chip" onclick="filtrarCategoria('Exterior', event)">Exterior</button>
+    <button class="chip" onclick="filtrarCategoria('Suculenta', event)">Suculentas</button>
+    <button class="chip" onclick="filtrarCategoria('Medicinal', event)">Medicinales</button>
 </nav>
 
-<div class="container">
-    <div class="grid" id="grid">
+<main class="content-wrapper">
+    <div class="plant-grid" id="grid">
         </div>
-</div>
+</main>
 
-<div id="modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header-img">
+<div id="modal" class="modal-overlay">
+    <div class="modal-card">
+        <button class="modal-close" onclick="cerrar()">&times;</button>
+        <div class="modal-hero">
             <img id="modalImg" src="">
-            <span class="close-btn" onclick="cerrar()">&times;</span>
-        </div>
-        <div class="modal-info">
-            <h2 id="modalTitulo"></h2>
-            <p id="modalDescripcion"></p>
-            <div class="care-grid">
-                <div class="care-item"><i class="fa-solid fa-sun"></i> <div><strong>Luz</strong><p id="careLuz"></p></div></div>
-                <div class="care-item"><i class="fa-solid fa-droplet"></i> <div><strong>Riego</strong><p id="careRiego"></p></div></div>
-                <div class="care-item"><i class="fa-solid fa-cloud-sun"></i> <div><strong>Clima</strong><p id="careClima"></p></div></div>
-                <div class="care-item"><i class="fa-solid fa-star"></i> <div><strong>Extra</strong><p id="careExtra"></p></div></div>
+            <div class="modal-title-box">
+                <h2 id="modalTitulo"></h2>
+                <span id="modalTag" class="tag"></span>
             </div>
-            <button class="btn-adoptar" onclick="cerrar()">¡Añadir a mi Jardín!</button>
+        </div>
+        <div class="modal-body">
+            <h3>Sobre esta especie</h3>
+            <p id="modalDescripcion"></p>
+            
+            <div class="care-stats">
+                <div class="stat-card">
+                    <i class="fa-solid fa-sun"></i>
+                    <div><b>Luz</b><p id="careLuz"></p></div>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-droplet"></i>
+                    <div><b>Riego</b><p id="careRiego"></p></div>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-temperature-half"></i>
+                    <div><b>Clima</b><p id="careClima"></p></div>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <div><b>Tip Pro</b><p id="careExtra"></p></div>
+                </div>
+            </div>
+            <button class="btn-action" onclick="cerrar()">Entendido</button>
         </div>
     </div>
 </div>

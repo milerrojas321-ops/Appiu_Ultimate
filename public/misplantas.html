@@ -1,74 +1,157 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Appiu Garden | Mi Diario Verde</title>
-  <link rel="stylesheet" href="./css/misplantas.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Jardín Digital | Appiu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/misplantas.css">
+    <style>
+        /* Estilos básicos para el Modal de Estadísticas */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+        }
+        progress {
+            width: 100%;
+            height: 15px;
+            border-radius: 10px;
+            accent-color: #2e7d32;
+        }
+        #statsGrafico p {
+            margin: 15px 0 5px;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
 
-  <a href="menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> Menú Principal</a>
-
-  <div class="main-content-garden">
-    <header class="garden-banner">
-        <div class="banner-content">
-            <h1>Cultivando mi futuro</h1>
-            <p>"Cada brote es una nueva historia"</p>
+<div class="dashboard-container">
+    <aside class="sidebar-editor">
+        <div class="brand-box" style="cursor: pointer;" onclick="location.href='menu.html'">
+            <i class="fa-solid fa-leaf"></i> <span>Appiu Garden</span>
         </div>
-    </header>
 
-    <div class="garden-grid-layout">
-        <aside class="sidebar-form">
-            <div class="appiu-card form-sticky">
-                <div class="card-header">
-                    <h3><i class="fas fa-seedling"></i> Registrar Planta</h3>
-                </div>
-                <form id="plantForm">
-                    <div class="upload-box" id="dropZone">
-                        <input type="file" id="plantImage" accept="image/*" hidden>
-                        <div class="upload-placeholder">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <span>Sube una foto de tu jardín</span>
-                        </div>
-                        <img id="preview" src="" style="display:none;">
+        <div class="glass-card form-card">
+            <h3><i class="fa-solid fa-plus"></i> Nuevo Brote</h3>
+            <form id="plantForm" enctype="multipart/form-data">
+                <div class="upload-area" id="dropZone">
+                    <input type="file" id="plantImage" name="imagen" accept="image/*" hidden>
+                    <div id="preview-container">
+                        <i class="fa-solid fa-camera"></i>
+                        <p>Subir foto</p>
                     </div>
-                    
-                    <div class="input-stack">
-                        <label>Nombre del brote</label>
-                        <input type="text" id="plantName" placeholder="Ej. Orquídea Real" class="appiu-input" required>
-                        
-                        <label>Ubicación</label>
-                        <select id="plantType" class="appiu-input">
-                            <option value="Interior">Interior</option>
-                            <option value="Exterior">Exterior</option>
-                            <option value="Huerto">Huerto / Frutal</option>
-                        </select>
-                    </div>
+                    <img id="preview" src="" style="display:none; width: 100%; border-radius: 10px;">
+                </div>
 
-                    <button type="submit" class="btn-publish">
-                        <i class="fas fa-leaf"></i> Plantar Brote
-                    </button>
-                </form>
+                <div class="input-group">
+                    <label>Nombre</label>
+                    <input type="text" id="plantName" name="nombre" placeholder="Ej. Mi Monstera" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Especie/Tipo</label>
+                    <select id="plantType" name="tipo">
+                        <option value="Interior">Interior</option>
+                        <option value="Exterior">Exterior</option>
+                        <option value="Suculenta">Suculenta</option>
+                        <option value="Frutal">Huerto / Frutal</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <span>Plantar ahora</span>
+                    <i class="fa-solid fa-seedling"></i>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-garden">
+        <header class="garden-header">
+            <div class="welcome">
+                <h1>Tu Invernadero Digital</h1>
+                <p id="stats-text">Tienes 0 plantas bajo tu cuidado.</p>
             </div>
-        </aside>
-
-        <main class="plants-feed">
-            <div class="feed-header">
-                <h2>Mis Brotes Activos</h2>
-                <div class="filter-pills">
-                    <button class="pill active">Todas</button>
-                    <button class="pill">Saludables</button>
-                    <button class="pill">Necesitan Agua</button>
+            <div class="quick-tips">
+                <div class="tip-card">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <p id="daily-tip">Tip del día: Las suculentas aman la luz indirecta.</p>
                 </div>
             </div>
+        </header>
+
+        <nav class="garden-filters">
+            <button class="filter-pill active" data-filter="Todas">Todas</button>
+            <button class="filter-pill" data-filter="Interior">Interior</button>
+            <button class="filter-pill" data-filter="Exterior">Exterior</button>
+            <button class="filter-pill" data-filter="Sedientas">Necesitan Agua</button>
+        </nav>
+
+        <div id="plantsGrid" class="plants-grid">
+            </div>
+    </main>
+</div>
+
+<div id="plantModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal()">&times;</span>
+        <h2 id="modalNombre">Nombre de la Planta</h2>
+        <hr>
+        <div id="statsGrafico">
+            <p><i class="fa-solid fa-droplet"></i> Humedad del suelo</p>
+            <progress id="progHumedad" value="0" max="100"></progress>
             
-            <div id="plantsGrid" class="appiu-feed-grid"></div>
-        </main>
+            <p><i class="fa-solid fa-heart-pulse"></i> Salud general</p>
+            <progress id="progSalud" value="0" max="100"></progress>
+            
+            <p><i class="fa-solid fa-sun"></i> Exposición solar</p>
+            <progress id="progSol" value="45" max="100"></progress>
+        </div>
     </div>
 </div>
 
-  <script src="./js/misplantas.js"></script>
+<script src="js/misplantas.js"></script>
+<script>
+    // Función para cerrar el modal
+    function cerrarModal() {
+        document.getElementById('plantModal').style.display = 'none';
+    }
+
+    // Cerrar modal si se hace clic fuera de la caja blanca
+    window.onclick = function(event) {
+        let modal = document.getElementById('plantModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
 </body>
 </html>

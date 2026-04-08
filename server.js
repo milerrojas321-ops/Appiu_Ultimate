@@ -1,27 +1,68 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const rutasUsuarios = require('./routes/usuarios');
 const publicacionesRoutes = require('./routes/publicaciones'); 
 const db = require('./data/db'); 
+const PORT = 3650;
 const multer = require('multer');
 const app = express();
-const PORT = 3650;
+
+// 1. Configurar dónde y cómo se guardan las fotos
+const storage = multer.diskStorage({
+    destination: 'public/uploads/', // Asegúrate de que esta carpeta exista
+    filename: (req, file, cb) => {
+        // Le pone un nombre único usando la fecha actual + la extensión original (.jpg, .png, etc)
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// 2. Crear la ruta para registrar plantas
+app.post('/api/plantas/registrar', upload.single('imagen'), async (req, res) => {
+    try {
+        const { nombre, tipo, usuario_id } = req.body;
+        const imagen_url = req.file ? req.file.filename : null;
+
+        // Ajusta esta consulta SQL según los nombres exactos de tus columnas
+        const sql = "INSERT INTO coleccion_plantas (nombre_comun, categoria, foto_url, usuario_id) VALUES (?, ?, ?, ?)";
+        
+        // Asumiendo que usas mysql2 con promesas
+        await db.query(sql, [nombre, tipo, imagen_url, usuario_id]);
+
+        res.json({ success: true, mensaje: "Planta guardada correctamente" });
+    } catch (error) {
+        console.error("Error en el servidor:", error);
+        res.status(500).json({ success: false, mensaje: "Error al registrar la planta" });
+    }
+});
+
+// RUTA PARA OBTENER LAS PLANTAS DE UN USUARIO ESPECÍFICO
+app.get('/api/mis-plantas/:usuario_id', async (req, res) => {
+    try {
+        const { usuario_id } = req.params;
+        
+        // Consultamos las plantas que pertenecen a este usuario
+        const sql = "SELECT * FROM coleccion_plantas WHERE usuario_id = ? ORDER BY id DESC";
+        const [rows] = await db.query(sql, [usuario_id]);
+
+        // Enviamos los datos como JSON real
+        res.json(rows);
+    } catch (error) {
+        console.error("Error al obtener plantas:", error);
+        res.status(500).json({ error: "Error al obtener las plantas" });
+    }
+});
+
+// AGREGA ESTAS DOS LÍNEAS AQUÍ:
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
 
 
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 // ESTA LÍNEA ES VITAL:
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Configuración de Multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'public/uploads/'); 
-    },
-    filename: (req, file, cb) => {
-        cb(null, `perfil-${Date.now()}${path.extname(file.originalname)}`);
-    }
-});
-const upload = multer({ storage: storage });
 
 // En server.js (Ruta de actualización)
 app.post('/api/usuarios/actualizar/:id', upload.single('foto_perfil'), async (req, res) => {
@@ -42,6 +83,29 @@ app.post('/api/usuarios/actualizar/:id', upload.single('foto_perfil'), async (re
         }
         res.json({ success: true, message: "¡Perfil y publicaciones actualizados! 🌿" });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/usuarios/actualizar/:id', upload.single('foto_perfil'), async (req, res) => {
+    const userId = req.params.id;
+    const { username, expert_bio } = req.body; 
+    const foto = req.file ? req.file.filename : null;
+
+    try {
+        // 1. Actualizamos la tabla de Usuarios
+        if (foto) {
+            await db.query("UPDATE users SET username = ?, expert_bio = ?, foto_perfil = ? WHERE id = ?", [username, expert_bio, foto, userId]);
+        } else {
+            await db.query("UPDATE users SET username = ?, expert_bio = ? WHERE id = ?", [username, expert_bio, userId]);
+        }
+
+        // 2. ¡ESTA ES LA CLAVE! Actualizamos el nombre en todas sus publicaciones
+        await db.query("UPDATE posts SET username = ? WHERE user_id = ?", [username, userId]);
+
+        res.json({ success: true, message: "Perfil y publicaciones actualizados correctamente" });
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -146,19 +210,34 @@ app.use('/auth', rutasUsuarios);
 app.use('/api/publicaciones', publicacionesRoutes);
 
 // server.js - Nueva ruta de sugerencias con estado de seguimiento
+// server.js
+// server.js
 app.get('/api/usuarios/sugerencias/:idLogueado', async (req, res) => {
     const idLogueado = req.params.idLogueado;
     try {
-        // Esta consulta trae los usuarios y verifica si ya existe la relación en la tabla seguidores
         const query = `
             SELECT u.id, u.username, u.foto_perfil, 
             (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = ? AND id_seguido = u.id) as loSigo
             FROM users u 
             WHERE u.id != ? 
-            LIMIT 5`;
+            ORDER BY RAND() LIMIT 5`;
             
         const [rows] = await db.query(query, [idLogueado, idLogueado]);
-        res.json(rows);
+
+        // --- ESTO ES LO QUE HACE QUE APAREZCA LA FOTO ---
+        const usuariosProcesados = rows.map(u => {
+            let foto = u.foto_perfil;
+            // Si la foto existe y no tiene la ruta completa, se la ponemos
+            if (foto && !foto.startsWith('http') && !foto.startsWith('/')) {
+                foto = `/uploads/${foto}`;
+            }
+            return {
+                ...u,
+                foto_perfil: foto || '/img/icono.jpg' // Icono por defecto si es null
+            };
+        });
+
+        res.json(usuariosProcesados);
     } catch (error) {
         console.error("Error en sugerencias:", error);
         res.status(500).json({ error: "Error en servidor" });
@@ -251,6 +330,7 @@ app.get('/api/usuarios/:id', async (req, res) => {
 // Busca esta ruta en server.js y reemplázala
 app.get('/api/publicaciones/:id', async (req, res) => {
     try {
+        // La consulta profesional: Pedimos datos de 'p' (posts) y de 'u' (users)
         const sql = `
             SELECT 
                 p.*, 
@@ -263,7 +343,7 @@ app.get('/api/publicaciones/:id', async (req, res) => {
         const [rows] = await db.query(sql);
         res.json(rows);
     } catch (error) {
-        console.error("Error en SQL del feed:", error);
+        console.error("Error en el JOIN del feed:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -320,41 +400,95 @@ app.post('/api/usuarios/follow', async (req, res) => {
     }
 });
 
-// --- RUTA PARA GUARDAR COMENTARIO ---
-// RUTA PARA OBTENER COMENTARIOS (GET)
+// server.js
 app.get('/api/publicaciones/:id/comentarios', async (req, res) => {
     const postId = req.params.id;
+    console.log("🔍 Intentando cargar comentarios para el post ID:", postId); // <--- NUEVO
     try {
-        // SQL corregido para usar 'user_id' y unir con 'users' para el nombre
-        const sql = `
-            SELECT c.*, u.username 
-            FROM comentarios c 
-            JOIN users u ON c.user_id = u.id 
-            WHERE c.post_id = ? 
-            ORDER BY c.id DESC`;
-            
+        // Ejecutamos la consulta
+        const sql = "SELECT c.*, u.username, u.foto_perfil FROM comentarios c LEFT JOIN users u ON c.user_id = u.id WHERE c.post_id = ? ORDER BY c.id ASC";
         const [rows] = await db.query(sql, [postId]);
-        res.json(rows); // Esto enviará [] si no hay comentarios
+        
+        console.log("✅ Comentarios encontrados:", rows.length); // <--- NUEVO
+        res.json(rows); 
     } catch (error) {
-        console.error("❌ Error SQL en GET comentarios:", error);
-        res.status(500).json({ error: "Error interno del servidor", detalle: error.message });
+        console.error("❌ ERROR CRÍTICO EN SQL:", error); // <--- AQUÍ VEREMOS EL ERROR REAL
+        res.status(500).json({ error: error.message, detail: "Revisa la terminal de VS Code" });
     }
 });
 
-// RUTA PARA GUARDAR COMENTARIO (POST)
+// GUARDAR COMENTARIO (POST)
 app.post('/api/comentarios', async (req, res) => {
-    const { usuario_id, username, publicacion_id, contenido } = req.body;
+    // Recibimos los datos del frontend
+    const { usuario_id, publicacion_id, contenido } = req.body;
+    
     try {
-        // Usamos los nombres exactos de tu nueva tabla: post_id, user_id, texto
-        await db.query(
-            "INSERT INTO comentarios (post_id, user_id, username, texto) VALUES (?, ?, ?, ?)", 
-            [publicacion_id, usuario_id, username, contenido]
-        );
-        res.json({ success: true });
+        // CORRECCIÓN: Usamos 'post_id', 'user_id' y 'texto' (como en tu tabla)
+        const sql = "INSERT INTO comentarios (post_id, user_id, texto) VALUES (?, ?, ?)";
+        await db.query(sql, [publicacion_id, usuario_id, contenido]);
+        
+        res.json({ success: true, message: "Comentario publicado" });
     } catch (error) {
-        console.error("❌ Error SQL en POST comentarios:", error);
+        console.error("❌ Error SQL en POST:", error);
         res.status(500).json({ success: false, error: error.message });
     }
+});
+
+// server.js
+
+// RUTA PARA OBTENER TODO EL PERFIL DE UN USUARIO EXTERNO
+app.get('/api/usuarios/perfil-completo/:idLogueado/:perfilId', async (req, res) => {
+    const { idLogueado, perfilId } = req.params;
+
+    try {
+        // CONSULTA 1: Datos del usuario, contadores y si el logueado lo sigue
+        const sqlUser = `
+            SELECT u.id, u.username, u.expert_bio AS biografia, u.foto_perfil, u.is_expert,
+            (SELECT COUNT(*) FROM seguidores WHERE id_seguido = u.id) AS seguidores_count,
+            (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = u.id) AS seguidos_count,
+            (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = ? AND id_seguido = u.id) AS loSigo
+            FROM users u WHERE u.id = ?`;
+        
+        const [userRows] = await db.query(sqlUser, [idLogueado, perfilId]);
+        
+        if (userRows.length === 0) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        // Procesamos la foto para que siempre tenga la ruta local /uploads/
+        let usuario = userRows[0];
+        let foto = usuario.foto_perfil;
+        if (foto && !foto.startsWith('http') && !foto.startsWith('/')) {
+            foto = `/uploads/${foto}`;
+        }
+        usuario.foto_perfil = foto || '/img/icono.jpg';
+
+        // CONSULTA 2: Publicaciones del usuario
+        const [postRows] = await db.query('SELECT * FROM posts WHERE user_id = ? ORDER BY id DESC', [perfilId]);
+
+        // Enviamos todo en un solo paquete JSON
+        res.json({
+            usuario: usuario,
+            publicaciones: postRows
+        });
+
+    } catch (error) {
+        console.error("Error en perfil unificado:", error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+});
+
+// En tu server.js
+app.post('/api/plantas/registrar', (req, res) => {
+    // Tu lógica para guardar en la base de datos
+    console.log(req.body); 
+    res.json({ mensaje: "Planta registrada con éxito" });
+});
+
+
+app.get('/api/mis-plantas/:usuario_id', async (req, res) => {
+    const [rows] = await db.query("SELECT * FROM coleccion_plantas WHERE usuario_id = ?", [req.params.usuario_id]);
+    res.json(rows);
 });
 
 // INICIO DE CONEXIÓN

@@ -36,35 +36,40 @@ async function inicializarVista() {
 }
 
 // Función para obtener datos frescos de la DB
+// perfil.js
 async function cargarDatosPerfil() {
     const userLocal = JSON.parse(localStorage.getItem("user"));
     if (!userLocal) return;
 
     try {
-        // Pedimos los datos reales al servidor usando el ID del localStorage
         const response = await fetch(`/api/usuarios/${userLocal.id}`);
         const datosReales = await response.json();
 
         if (datosReales && !datosReales.error) {
-            // 1. Actualizamos los textos en el HTML
-            document.getElementById("nombre-usuario").innerText = `@${datosReales.username}`;
-            document.getElementById("bio-usuario").innerText = datosReales.expert_bio || "Sin biografía aún...";
-            
-            // 2. Corregimos la ruta de la foto
-            let foto = datosReales.foto_perfil;
-            if (foto && !foto.startsWith('http') && !foto.startsWith('/')) {
-                foto = `/uploads/${foto}`;
-            }
-            document.getElementById("foto-perfil-v").src = foto || "/img/default-avatar.png";
+            // USAR SELECTORES SEGUROS (Verifica que estos IDs existan en tu HTML)
+            const elNombre = document.getElementById("nombre-usuario");
+            const elBio = document.getElementById("bio-usuario");
+            const laFoto = document.getElementById("foto-perfil-v");
 
-            // 3. (Opcional) Actualizamos el localStorage para que el resto de la App sepa el cambio
+            // Solo asignamos si el elemento existe en el HTML
+            if (elNombre) elNombre.innerText = `@${datosReales.username}`;
+            if (elBio) elBio.innerText = datosReales.expert_bio || "Me gustan las plantas en el hogar";
+            
+            if (laFoto) {
+                let foto = datosReales.foto_perfil;
+                if (foto && !foto.startsWith('http') && !foto.startsWith('/')) {
+                    foto = `/uploads/${foto}`;
+                }
+                laFoto.src = foto || "/img/icono.jpg";
+            }
+
+            // Actualizamos el local para que el resto de la app se entere del cambio
             localStorage.setItem("user", JSON.stringify(datosReales));
         }
     } catch (error) {
-        console.error("Error al traer datos del perfil:", error);
+        console.error("❌ Error al cargar datos:", error);
     }
 }
-
 // Ejecutar al cargar la página
 window.onload = cargarDatosPerfil;
 

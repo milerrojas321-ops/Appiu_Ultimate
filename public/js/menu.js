@@ -67,7 +67,7 @@ async function cargarFeed() {
         posts.forEach(post => {
             // 1. Prioridad: Datos del JOIN -> Datos del post -> "Usuario"
             const nombreAutor = post.nombre_real || post.username || "Usuario";
-            
+
             // 2. Lógica de la Foto de Perfil
             let fotoAutor = post.foto_real || post.foto_perfil;
             if (fotoAutor && !fotoAutor.startsWith('http') && !fotoAutor.startsWith('/')) {
@@ -117,20 +117,33 @@ async function cargarFeed() {
 
 async function cargarSugerencias() {
     const lista = document.getElementById("lista-sugerencias");
+    if (!lista || !user) return; 
+
     try {
         const res = await fetch(`/api/usuarios/sugerencias/${user.id}`); 
         const usuarios = await res.json();
         lista.innerHTML = ""; 
 
         usuarios.forEach(u => {
-            const imagen = u.foto_perfil || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`;
+            // 1. Intentamos armar la ruta a tu carpeta local de subidas
+            let fotoFinal = u.foto_perfil;
+            
+            if (fotoFinal && !fotoFinal.startsWith('http') && !fotoFinal.startsWith('/')) {
+                // Esto asegura que busque en public/uploads/perfil-xxx.jpg
+                fotoFinal = `/uploads/${fotoFinal}`;
+            }
+
+            // 2. LA CLAVE: Si no tiene foto, usamos tu archivo local
+            // Asegúrate de tener una imagen en: public/img/usuario-defecto.png
+            const imagen = fotoFinal || '/img/icono.jpg'; 
+            
             const textoBoton = u.loSigo > 0 ? "Siguiendo" : "Seguir";
             const claseBoton = u.loSigo > 0 ? "btn-followed" : "";
 
             lista.innerHTML += `
                 <div class="user-suggest">
-                    <div class="user-suggest-info" onclick="verPerfil(${u.id})">
-                        <img src="${imagen}" alt="${u.username}">
+                    <div class="user-suggest-info" onclick="verPerfil(${u.id})" style="cursor:pointer;">
+                        <img src="${imagen}" alt="${u.username}" onerror="this.src='/img/icono.jpg'">
                         <b>${u.username}</b>
                     </div>
                     <button class="btn-follow ${claseBoton}" onclick="followUser(event, ${u.id})">
@@ -138,7 +151,9 @@ async function cargarSugerencias() {
                     </button>
                 </div>`;
         });
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error("Error en cargarSugerencias:", e); 
+    }
 }
 
 async function cargarNotificaciones() {
@@ -208,87 +223,70 @@ async function abrirComentarios(postId) {
     cargarComentarios(postId);
 }
 
+// menu.js
 async function cargarComentarios(postId) {
+    currentPostId = postId; // Guardamos el ID para saber dónde publicar
     const list = document.getElementById('commentsList');
-    if (!list) return;
+    const panel = document.getElementById('commentsPanel');
+    
+    if (!list || !panel) return;
+    
+    panel.classList.add('active'); // Abrir el panel
+    list.innerHTML = "<p style='text-align:center;'>Cargando...</p>";
 
     try {
         const res = await fetch(`/api/publicaciones/${postId}/comentarios`);
         const comments = await res.json();
         
-        // --- VALIDACIÓN DE SEGURIDAD ---
-        if (!Array.isArray(comments)) {
-            console.error("Lo recibido no es una lista:", comments);
-            list.innerHTML = "<p>Error al cargar comentarios.</p>";
-            return;
-        }
-
         list.innerHTML = "";
+
         if (comments.length === 0) {
-            list.innerHTML = "<p>No hay comentarios aún.</p>";
+            list.innerHTML = "<p style='text-align:center; color:#888; padding:20px;'>Aún no hay brotes en esta conversación.</p>";
             return;
         }
 
         comments.forEach(c => {
+            let foto = c.foto_perfil || '/img/icono.jpg';
+            if (foto && !foto.startsWith('http') && !foto.startsWith('/')) foto = `/uploads/${foto}`;
+
             list.innerHTML += `
-                <div class="comment-item">
-                    <b>${c.username}:</b>
-                    <p>${c.texto}</p>
+                <div style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start;">
+                    <img src="${foto}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">
+                    <div style="background:#f0f2f5; padding:10px; border-radius:15px; flex:1;">
+                        <b style="font-size:0.85rem; color:var(--primary);">@${c.username || 'Usuario'}</b>
+                        <p style="margin:2px 0 0 0; font-size:0.9rem;">${c.texto}</p>
+                    </div>
                 </div>`;
         });
+        list.scrollTop = list.scrollHeight;
     } catch (e) {
-        console.error("Error en cargarComentarios:", e);
+        list.innerHTML = "<p>Error al cargar comentarios.</p>";
     }
 }
 
 // Añadimos 'event' como primer parámetro
-async function enviarComentario(event, boton, postId) {
-    if (event) event.preventDefault();
-
-    // Intentamos buscar el input en dos lugares:
-    // 1. En el panel lateral (donde probablemente esté el form que me pasaste)
-    // 2. O en la tarjeta del post
-    const input = document.getElementById('comment-text') || 
-                boton.closest('.post-card')?.querySelector('.input-comentario');
-    
-    const textoValue = input ? input.value.trim() : "";
+async function enviarComentario(event, btn) {
+    const texto = document.getElementById('comment-text').value;
     const user = JSON.parse(localStorage.getItem("user"));
-
-    // Usamos el postId que recibimos por parámetro, o el currentPostId global si existe
-    const idParaEnviar = postId || currentPostId;
-
-    console.log("Enviando a publicación:", idParaEnviar);
-
-    if (!textoValue || !user || !idParaEnviar) {
-        console.error("Faltan datos:", { textoValue, user, idParaEnviar });
-        return;
-    }
+    
+    if(!texto) return;
 
     try {
-        const response = await fetch('/api/comentarios', {
+        const res = await fetch('/api/comentarios', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                usuario_id: user.id,
-                username: user.username,
-                publicacion_id: idParaEnviar,
-                contenido: textoValue
+            body: JSON.stringify({ 
+                usuario_id: user.id, 
+                publicacion_id: currentPostId, // Este es el ID del post abierto
+                contenido: texto 
             })
         });
 
-        if (response.ok) {
-            if (input) input.value = ""; // Limpiar el input
-            
-            // Actualizamos la lista de comentarios inmediatamente
-            await cargarComentarios(idParaEnviar); 
-            console.log("✅ Comentario guardado y lista refrescada");
-        } else {
-            const errorData = await response.json();
-            console.error("Error del servidor:", errorData);
+        if (res.ok) {
+            document.getElementById('comment-text').value = ""; // Limpiar input
+            cargarComentarios(currentPostId); // Recargar lista
         }
-    } catch (e) {
-        console.error("Error en la petición:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 document.getElementById('form-publicar').addEventListener('submit', async (e) => {

@@ -1,140 +1,103 @@
 :root {
-    --appiu-green: #1d4d2f;
-    --appiu-green-soft: #e8f5e9;
-    --appiu-bg: #f8faf9;
-    --appiu-white: #ffffff;
-    --appiu-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    --forest: #1a4d2e;
+    --mint: #4ade80;
+    --soft-bg: #f0f4f2;
+    --white: #ffffff;
+    --warning: #ff7675;
 }
 
-.main-content-garden {
-    padding: 30px;
-    background-color: var(--appiu-bg);
-    min-height: 100vh;
+body {
+    margin: 0; background: var(--soft-bg); font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* Banner Superior */
-.garden-banner {
-    background: linear-gradient(rgba(29, 77, 47, 0.8), rgba(29, 77, 47, 0.8)), 
-                url('https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&q=80');
-    background-size: cover;
-    background-position: center;
-    height: 160px;
-    border-radius: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    text-align: center;
-    margin-bottom: 30px;
+.dashboard-container {
+    display: flex; min-height: 100vh;
 }
 
-/* Layout de Rejilla */
-.garden-grid-layout {
-    display: grid;
-    grid-template-columns: 350px 1fr;
-    gap: 30px;
+/* Sidebar */
+.sidebar-editor {
+    width: 350px; background: var(--white); padding: 40px 25px;
+    border-right: 1px solid #e2e8f0; position: sticky; top: 0; height: 100vh;
 }
 
-/* Tarjetas Estilo Appiu */
-.appiu-card {
-    background: var(--appiu-white);
-    border-radius: 30px;
-    padding: 30px;
-    box-shadow: var(--appiu-shadow);
+.brand-box {
+    color: var(--forest); font-size: 1.5rem; font-weight: 800;
+    margin-bottom: 40px; cursor: pointer; display: flex; align-items: center; gap: 10px;
 }
 
-.form-sticky { position: sticky; top: 30px; }
+.form-card h3 { color: var(--forest); margin-bottom: 20px; }
 
-/* Zona de Carga */
-.upload-box {
-    width: 100%;
-    height: 180px;
-    border: 2px dashed #dce3df;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    overflow: hidden;
-    margin-bottom: 20px;
-    background: #fdfdfd;
-    transition: 0.3s;
+.upload-area {
+    width: 100%; height: 180px; border: 2px dashed #cbd5e1;
+    border-radius: 20px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; cursor: pointer;
+    overflow: hidden; margin-bottom: 20px; transition: 0.3s;
 }
 
-.upload-box:hover { border-color: var(--appiu-green); background: var(--appiu-green-soft); }
-
-.upload-placeholder { text-align: center; color: #888; }
-.upload-placeholder i { font-size: 40px; display: block; margin-bottom: 10px; }
-
+.upload-area:hover { border-color: var(--mint); background: #f8fafc; }
 #preview { width: 100%; height: 100%; object-fit: cover; }
 
-/* Inputs y Botones */
-.appiu-input {
-    width: 100%;
-    padding: 15px;
-    border: 1px solid #eee;
-    border-radius: 15px;
-    margin: 8px 0 20px 0;
-    background: #f9f9f9;
+.input-group { margin-bottom: 15px; }
+.input-group label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #64748b; }
+.input-group input, .input-group select {
+    width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; outline: none;
 }
 
-.btn-publish {
-    width: 100%;
-    background: var(--appiu-green);
-    color: white;
-    border: none;
-    padding: 18px;
-    border-radius: 50px;
-    font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
-    box-shadow: 0 10px 20px rgba(29, 77, 47, 0.2);
+.btn-submit {
+    width: 100%; padding: 15px; border-radius: 50px; border: none;
+    background: var(--forest); color: white; font-weight: 800;
+    display: flex; justify-content: center; gap: 10px; cursor: pointer; transition: 0.3s;
+}
+.btn-submit:hover { transform: scale(1.02); box-shadow: 0 10px 20px rgba(26, 77, 46, 0.2); }
+
+/* Main Area */
+.main-garden { flex: 1; padding: 40px 5%; }
+.garden-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+
+.tip-card {
+    background: #eefdf5; padding: 15px 20px; border-radius: 20px;
+    display: flex; align-items: center; gap: 12px; border: 1px solid #d1fae5;
+}
+.tip-card i { color: var(--mint); font-size: 1.2rem; }
+
+.garden-filters { display: flex; gap: 10px; margin-bottom: 30px; }
+.filter-pill {
+    padding: 10px 20px; border-radius: 50px; border: 1px solid #e2e8f0;
+    background: white; cursor: pointer; font-weight: 600; color: #64748b;
+}
+.filter-pill.active { background: var(--forest); color: white; border-color: var(--forest); }
+
+/* Plant Cards */
+.plants-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px;
 }
 
-/* Grid de Feed */
-.appiu-feed-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 25px;
+.plant-card {
+    background: white; border-radius: 30px; overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03); transition: 0.3s;
 }
+.plant-card:hover { transform: translateY(-5px); }
 
-/* Tarjeta de Planta (Estilo Post) */
-.plant-card-post {
-    background: var(--appiu-white);
-    border-radius: 30px;
-    overflow: hidden;
-    box-shadow: var(--appiu-shadow);
-    transition: transform 0.3s;
+.card-image { position: relative; height: 200px; }
+.card-image img { width: 100%; height: 100%; object-fit: cover; }
+
+.health-bar-container {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 6px; background: rgba(0,0,0,0.1);
 }
+.health-fill { height: 100%; background: var(--mint); transition: 0.5s; }
 
-.plant-card-post:hover { transform: translateY(-5px); }
+.card-content { padding: 20px; }
+.type-tag { font-size: 0.7rem; font-weight: 800; color: var(--forest); background: #eefdf5; padding: 4px 10px; border-radius: 6px; }
 
-.plant-card-img { width: 100%; height: 220px; object-fit: cover; }
+.care-indicators { display: flex; gap: 15px; margin: 15px 0; }
+.ind { font-size: 0.8rem; display: flex; align-items: center; gap: 5px; color: #64748b; }
+.ind.warning { color: var(--warning); font-weight: 700; }
 
-.plant-card-body { padding: 20px; }
-
-.progress-container {
-    background: #eee;
-    height: 10px;
-    border-radius: 10px;
-    margin: 15px 0;
+.card-actions { display: flex; gap: 10px; }
+.btn-care {
+    flex: 1; padding: 10px; border-radius: 12px; border: none;
+    background: #f1f5f9; color: var(--forest); font-weight: 700; cursor: pointer;
 }
-
-.progress-fill {
-    background: var(--appiu-green);
-    height: 100%;
-    border-radius: 10px;
-    transition: 0.5s;
+.btn-delete {
+    padding: 10px 15px; border-radius: 12px; border: none; background: #fee2e2; color: #ef4444; cursor: pointer;
 }
-
-/* Pills de Filtro */
-.filter-pills { display: flex; gap: 10px; margin-bottom: 20px; }
-.pill {
-    padding: 10px 20px;
-    border-radius: 50px;
-    border: none;
-    background: white;
-    color: #666;
-    cursor: pointer;
-}
-.pill.active { background: var(--appiu-green); color: white; }

@@ -61,60 +61,6 @@ router.post('/crear', upload.single('image'), async (req, res) => {
 
 // ... (tota la part inicial de multer i get queda IGUAL)
 
-
-// RUTA DE COMENTARIO (Corregido: Acepta /comentario y /comentar)
-router.post('/:id/comentario', async (req, res) => {
-    const post_id = req.params.id;
-    const { user_id, username, content } = req.body;
-    try {
-        await db.query('INSERT INTO comments (post_id, user_id, username, content) VALUES (?, ?, ?, ?)', [post_id, user_id, username, content]);
-        
-        const [post] = await db.query('SELECT user_id FROM posts WHERE id = ?', [post_id]);
-        if (post.length > 0 && post[0].user_id != user_id) {
-            await db.query('INSERT INTO notificaciones (id_receptor, id_emisor, tipo, id_referencia) VALUES (?, ?, ?, ?)', [post[0].user_id, user_id, 'comment', post_id]);
-        }
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
-});
-
-// OBTENER COMENTARIOS
-router.get('/:id/comentarios', async (req, res) => {
-    try {
-        const sql = `SELECT c.*, u.foto_perfil FROM comments c LEFT JOIN users u ON c.user_id = u.id WHERE c.post_id = ? ORDER BY c.created_at DESC`;
-        const [rows] = await db.query(sql, [req.params.id]);
-        res.json(rows);
-    } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-// 3. AGREGAR COMENTARIO (Actualizado con Notificación)
-router.post('/:id/comentar', async (req, res) => {
-    const post_id = req.params.id;
-    const { user_id, username, content } = req.body;
-
-    try {
-        // Insertamos el comentario (esto ya lo tenías)
-        await db.query(
-            'INSERT INTO comments (post_id, user_id, username, content) VALUES (?, ?, ?, ?)', 
-            [post_id, user_id, username, content]
-        );
-
-        // --- NOTIFICACIÓN: Buscamos al dueño del post ---
-        const [post] = await db.query('SELECT user_id FROM posts WHERE id = ?', [post_id]);
-        
-        // Notificamos si el dueño no es el mismo que comenta
-        if (post.length > 0 && post[0].user_id != user_id) {
-            await db.query(
-                'INSERT INTO notificaciones (id_receptor, id_emisor, tipo, id_referencia) VALUES (?, ?, ?, ?)',
-                [post[0].user_id, user_id, 'comment', post_id]
-            );
-        }
-
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
 // 5. DAR O QUITAR LIKE (Actualizado con Notificación)
 router.post('/:id/like', async (req, res) => {
     const postId = req.params.id;
@@ -176,14 +122,5 @@ router.get('/:userId', async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// COMENTARIOS (Ruta dual para evitar 404)
-router.post('/:id/comentario', async (req, res) => {
-    const post_id = req.params.id;
-    const { user_id, username, content } = req.body;
-    try {
-        await db.query('INSERT INTO comentarios (post_id, user_id, username, texto) VALUES (?, ?, ?, ?)', [post_id, user_id, username, content]);
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
-});
 
 module.exports = router;

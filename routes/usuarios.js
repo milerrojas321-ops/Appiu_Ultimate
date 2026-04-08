@@ -129,22 +129,7 @@ router.get('/perfil/:id', async (req, res) => {
 });
 
 
-// SUGERENCIAS (Arregla el error 404 de /api/usuarios/sugerencias)
-router.get('/sugerencias/:userId', async (req, res) => {
-    const userId = req.params.userId;
-    try {
-        const query = `
-            SELECT id, username, foto_perfil 
-            FROM users 
-            WHERE id != ? 
-            AND id NOT IN (SELECT id_seguido FROM seguidores WHERE id_seguidor = ?)
-            ORDER BY RAND() LIMIT 5`;
-        const [rows] = await db.query(query, [userId, userId]);
-        res.json(rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+
 
 //ajusta la ruta a tu conexión
 

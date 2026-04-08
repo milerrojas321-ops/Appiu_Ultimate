@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil de Usuario | Appiu</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -9,18 +10,61 @@
 </head>
 <body>
     <div class="profile-container">
-        <button onclick="history.back()" style="margin-bottom: 20px; border: none; background: none; cursor: pointer; color: var(--primary); font-weight: 800;">
-            <i class="fa-solid fa-arrow-left"></i> Volver
-        </button>
+        <header class="profile-nav">
+            <button onclick="history.back()" class="btn-icon">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2 id="top-username">Perfil</h2>
+            <button class="btn-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        </header>
 
-        <section class="profile-header">
-            <img src="" id="user-foto" alt="Foto de perfil">
-            <div class="user-details">
-                <h1 id="user-name">Cargando...</h1>
-                <p id="user-bio">...</p>
-                <button class="btn-follow-main">Seguir</button>
+        <section class="profile-card">
+            <div class="profile-info-main">
+                <div class="pfp-wrapper">
+                    <img src="/img/icono.jpg" id="user-foto" alt="Foto de perfil">
+                    <div class="expert-badge" id="badge-expert" style="display:none;">
+                        <i class="fa-solid fa-certificate"></i>
+                    </div>
+                </div>
+                <div class="user-text">
+                    <h1 id="user-name">@usuario</h1>
+                    <p id="user-bio">Cargando biografía botánica...</p>
+                    <div class="user-tags" id="user-tags">
+                        <span class="tag">🌿 Aficionado</span>
+                        <span class="tag">📍 Colombia</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-stats">
+                <div class="stat">
+                    <span class="stat-num" id="count-publicaciones">0</span>
+                    <span class="stat-label">Brotes</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-num" id="count-seguidores">0</span>
+                    <span class="stat-label">Seguidores</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-num" id="count-seguidos">0</span>
+                    <span class="stat-label">Seguidos</span>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button id="btn-follow-main" class="btn-primary">Seguir</button>
+                <button class="btn-secondary"><i class="fa-solid fa-paper-plane"></i> Mensaje</button>
             </div>
         </section>
+
+        <nav class="content-tabs">
+            <button class="tab-item active" onclick="switchTab('posts')">
+                <i class="fa-solid fa-table-cells"></i> Galería
+            </button>
+            <button class="tab-item" onclick="switchTab('info')">
+                <i class="fa-solid fa-circle-info"></i> Información
+            </button>
+        </nav>
 
         <div class="grid-posts" id="grid-posts">
             </div>

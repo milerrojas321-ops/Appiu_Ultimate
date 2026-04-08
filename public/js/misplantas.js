@@ -1,76 +1,141 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const dropZone = document.getElementById('dropZone');
-    const plantImage = document.getElementById('plantImage');
-    const preview = document.getElementById('preview');
-    const plantForm = document.getElementById('plantForm');
-    const plantsGrid = document.getElementById('plantsGrid');
+const user = JSON.parse(localStorage.getItem("user"));
+const plantForm = document.getElementById('plantForm');
+const plantsGrid = document.getElementById('plantsGrid');
 
-    let currentImageData = "";
 
-    // Simular clic en input file
-    dropZone.onclick = () => plantImage.click();
+// 1. Cargar Plantas desde BD
+async function cargarMisPlantas() {
+    try {
+        const res = await fetch(`/api/mis-plantas/${user.id}`);
+        const plantas = await res.json();
+        renderizarPlantas(plantas);
+        actualizarStats(plantas.length);
+    } catch (e) {
+        console.error("Error cargando el jardín", e);
+    }
+}
 
-    // Previsualizar Imagen
-    plantImage.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                preview.src = event.target.result;
-                preview.style.display = 'block';
-                currentImageData = event.target.result;
-                dropZone.querySelector('.upload-placeholder').style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    // Agregar Nueva Planta
-    plantForm.onsubmit = (e) => {
-        e.preventDefault();
+// 2. Renderizar con Lógica de Cuidado
+function renderizarPlantas(plantas) {
+    plantsGrid.innerHTML = "";
+    plantas.forEach(p => {
+        // Lógica de salud (se mantiene igual)
+        const salud = Math.floor(Math.random() * (100 - 60 + 1)) + 60;
+        const necesitaAgua = salud < 75;
         
-        const name = document.getElementById('plantName').value;
-        const type = document.getElementById('plantType').value;
-        const date = new Date().toLocaleDateString();
-
         const card = document.createElement('div');
-        card.className = 'plant-card-post animate-in';
+        card.className = `plant-card ${necesitaAgua ? 'alert-water' : ''}`;
         
+        // CORRECCIÓN 1: Usar 'foto_url' que es el nombre en tu tabla coleccion_plantas
+        const imgUrl = p.foto_url 
+            ? (p.foto_url.startsWith('http') ? p.foto_url : p.foto_url) 
+            : '/img/default-plant.jpg';
+
         card.innerHTML = `
-            <div class="user-meta" style="padding: 15px; display: flex; align-items: center; gap: 10px;">
-                <div style="width: 35px; height: 35px; background: #ddd; border-radius: 50%;"></div>
-                <div>
-                    <strong style="display:block; font-size: 14px;">@miler</strong>
-                    <small style="color:#999">${date}</small>
+            <div class="card-image">
+                <img src="${imgUrl}" onerror="this.src='/img/default-plant.jpg'">
+                <div class="health-bar-container">
+                    <div class="health-fill" style="width: ${salud}%"></div>
                 </div>
             </div>
-            <img src="${currentImageData || 'https://via.placeholder.com/400x300'}" class="plant-card-img">
-            <div class="plant-card-body">
-                <span class="tag" style="background:var(--appiu-green-soft); color:var(--appiu-green); padding:5px 15px; border-radius:20px; font-size:12px; font-weight:bold;">${type}</span>
-                <h3 style="margin:15px 0 5px 0;">${name}</h3>
+            <div class="card-content">
+                <span class="type-tag">${p.categoria || 'Sin categoría'}</span>
                 
-                <div class="growth-box">
-                    <div style="display:flex; justify-content: space-between; font-size: 13px;">
-                        <span>Crecimiento</span>
-                        <strong>45%</strong>
+                <h3>${p.nombre_comun || 'Planta sin nombre'}</h3>
+                
+                <div class="care-indicators">
+                    <div class="ind ${necesitaAgua ? 'warning' : ''}">
+                        <i class="fa-solid fa-droplet"></i> 
+                        <span>${necesitaAgua ? 'Regar ya' : 'Hidratada'}</span>
                     </div>
-                    <div class="progress-container">
-                        <div class="progress-fill" style="width: 45%"></div>
+                    <div class="ind">
+                        <i class="fa-solid fa-calendar-day"></i>
+                        <span>${p.fecha_adopcion ? new Date(p.fecha_adopcion).toLocaleDateString() : 'Reciente'}</span>
                     </div>
                 </div>
-
-                <div class="card-footer" style="display:flex; justify-content: space-between; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
-                    <button style="background:none; border:none; color:var(--appiu-green); cursor:pointer;"><i class="fas fa-tint"></i> Regar</button>
-                    <button style="background:none; border:none; color:#ff7675; cursor:pointer;" onclick="this.closest('.plant-card-post').remove()"><i class="fas fa-trash"></i></button>
+                <div class="card-actions">
+                    <button class="btn-care" onclick="regarPlanta(${p.id})">Regar</button>
+                    <button class="btn-delete" onclick="eliminarPlanta(${p.id})"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
         `;
+        plantsGrid.appendChild(card);
+    });
+}
 
-        plantsGrid.prepend(card);
-        
-        // Resetear formulario
-        plantForm.reset();
-        preview.style.display = 'none';
-        dropZone.querySelector('.upload-placeholder').style.display = 'block';
-    };
+// 3. Manejo de Imagen y Formulario
+const dropZone = document.getElementById('dropZone');
+const plantImage = document.getElementById('plantImage');
+const preview = document.getElementById('preview');
+
+dropZone.onclick = () => plantImage.click();
+
+const formData = new FormData();
+formData.append('nombre', document.getElementById('plantName').value);
+formData.append('tipo', document.getElementById('plantType').value);
+formData.append('usuario_id', user.id);
+// ESTE NOMBRE DEBE SER 'imagen'
+formData.append('imagen', document.getElementById('plantImage').files[0]);
+
+plantImage.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            preview.src = ev.target.result;
+            preview.style.display = 'block';
+            document.getElementById('preview-container').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+plantForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(plantForm);
+    formData.append('usuario_id', user.id);
+
+    try {
+        const res = await fetch('/api/plantas/registrar', {
+            method: 'POST',
+            body: formData
+        });
+        if (res.ok) {
+            plantForm.reset();
+            preview.style.display = 'none';
+            document.getElementById('preview-container').style.display = 'flex';
+            cargarMisPlantas();
+        }
+    } catch (err) { alert("Error al plantar"); }
+};
+
+// misplantas.js
+const botonesFiltro = document.querySelectorAll('.filter-btn'); // Asegúrate de que tengan esta clase en el HTML
+
+botonesFiltro.forEach(boton => {
+    boton.addEventListener('click', () => {
+        const categoriaSeleccionada = boton.textContent.trim();
+        const plantasFiltradas = todasLasPlantas.filter(p => {
+            if (categoriaSeleccionada === 'Todas') return true;
+            if (categoriaSeleccionada === 'Necesitan Agua') return (Math.random() * 100) < 75; // O tu lógica de salud
+            return p.categoria === categoriaSeleccionada;
+        });
+        renderizarPlantas(plantasFiltradas);
+    });
 });
+
+
+function actualizarStats(total) {
+    document.getElementById('stats-text').innerText = `Tienes ${total} plantas bajo tu cuidado experto.`;
+}
+
+// Consejos dinámicos
+const tips = [
+    "No riegues al mediodía, el sol puede quemar las raíces.",
+    "El vinagre blanco ayuda a combatir hongos en las hojas.",
+    "Canta a tus plantas, el CO2 de tu voz les ayuda.",
+    "Si las puntas están cafés, falta humedad ambiental."
+];
+document.getElementById('daily-tip').innerText = `Tip del día: ${tips[Math.floor(Math.random() * tips.length)]}`;
+
+cargarMisPlantas();
