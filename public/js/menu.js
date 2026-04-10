@@ -116,59 +116,50 @@ async function cargarFeed() {
 }
 
 async function cargarSugerencias() {
-    const lista = document.getElementById("lista-sugerencias");
-    // Verificamos que existan la lista y el usuario logueado
-    if (!lista || !user || !user.id) return; 
+    // 1. Obtenemos los datos que guardaste al loguearte
+    const idLogueado = localStorage.getItem('userId'); 
+    const token = localStorage.getItem('token'); 
+
+    if (!idLogueado || !token) return;
 
     try {
-        // La URL debe ser exacta a como la definiste en server.js (/api/usuarios)
-        const res = await fetch(`/api/usuarios/sugerencias/${user.id}`); 
-        
-        // --- VALIDACIÓN CRÍTICA ---
-        // Si el servidor responde 404 (Not Found), nos detenemos aquí
-        if (!res.ok) {
-            console.warn("La ruta de sugerencias no respondió correctamente:", res.status);
-            return;
-        }
-
-        const usuarios = await res.json();
-        lista.innerHTML = ""; 
-
-        // Si no hay usuarios en la base de datos
-        if (usuarios.length === 0) {
-            lista.innerHTML = "<p style='padding:10px; font-size:12px; color:#666;'>No hay sugerencias</p>";
-            return;
-        }
-
-        usuarios.forEach(u => {
-            let fotoFinal = u.foto_perfil;
-            
-            // Ajuste de ruta para imágenes locales
-            if (fotoFinal && !fotoFinal.startsWith('http') && !fotoFinal.startsWith('/')) {
-                fotoFinal = `/uploads/${fotoFinal}`;
+        // 2. Llamamos a la ruta que ya probamos en el navegador
+        const response = await fetch(`/api/usuarios/sugerencias/${idLogueado}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`, // El "pase" para el guardia 'verificarToken'
+                'Content-Type': 'application/json'
             }
-
-            const imagen = fotoFinal || '/img/icono.jpg'; 
-            
-            const textoBoton = u.loSigo > 0 ? "Siguiendo" : "Seguir";
-            const claseBoton = u.loSigo > 0 ? "btn-followed" : "";
-
-            lista.innerHTML += `
-                <div class="user-suggest">
-                    <div class="user-suggest-info" onclick="verPerfil(${u.id})" style="cursor:pointer;">
-                        <img src="${imagen}" alt="${u.username}" onerror="this.src='/img/icono.jpg'">
-                        <b>${u.username}</b>
-                    </div>
-                    <button class="btn-follow ${claseBoton}" onclick="followUser(event, ${u.id})">
-                        ${textoBoton}
-                    </button>
-                </div>`;
         });
-    } catch (e) { 
-        // Este catch ahora solo atrapará errores reales de conexión, no errores de formato
-        console.error("Error en cargarSugerencias:", e); 
+
+        const usuarios = await response.json();
+        
+        // 3. Buscamos el lugar en tu HTML donde van las sugerencias
+        // Asegúrate de que en tu HTML tengas un div con id="lista-sugerencias"
+        const contenedor = document.getElementById('lista-sugerencias');
+        if (!contenedor) return;
+
+        // 4. Limpiamos y dibujamos los usuarios
+        if (usuarios.length === 0) {
+            contenedor.innerHTML = '<p>No hay sugerencias nuevas 🌿</p>';
+            return;
+        }
+
+        contenedor.innerHTML = usuarios.map(u => `
+            <div class="sugerencia-item">
+                <img src="${u.foto_perfil}" alt="${u.username}" style="width:50px; border-radius:50%;">
+                <span>${u.username}</span>
+                <button onclick="seguirUsuario(${u.id})">Seguir</button>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error("Error al cargar sugerencias:", error);
     }
 }
+
+// 5. Esto hace que la función corra apenas abra la página
+document.addEventListener('DOMContentLoaded', cargarSugerencias);
 
 
 async function cargarNotificaciones() {
@@ -277,8 +268,7 @@ async function cargarComentarios(postId) {
     list.innerHTML = "<p style='text-align:center;'>Cargando comentarios...</p>";
 
     try {
-        // 1. URL CORREGIDA: Debe coincidir con el router.get de publicaciones.js
-        // Según tu server.js es: /api/publicaciones/:id/comentarios
+        
         const res = await fetch(`/api/publicaciones/${postId}/comentarios`);
         
         if (!res.ok) throw new Error("Error en la respuesta");
@@ -292,13 +282,13 @@ async function cargarComentarios(postId) {
         }
 
         comments.forEach(c => {
-            // 2. RUTA DE IMAGEN: Usamos /uploads/ para que no de 404
+           
             let foto = c.foto_perfil ? (c.foto_perfil.startsWith('/') ? c.foto_perfil : `/uploads/${c.foto_perfil}`) : '/img/icono.jpg';
 
             list.innerHTML += `
                 <div style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start;">
                     <img src="${foto}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;" 
-                         onerror="this.src='/img/icono.jpg'">
+                        onerror="this.src='/img/icono.jpg'">
                     <div style="background:#f0f2f5; padding:10px; border-radius:15px; flex:1;">
                         <b style="font-size:0.85rem; color:green;">@${c.username || 'Usuario'}</b>
                         <p style="margin:2px 0 0 0; font-size:0.9rem;">${c.texto}</p>
@@ -329,8 +319,8 @@ async function enviarComentario(event, btn) {
                 // 2. CAMBIO DE NOMBRES: Usamos los que espera tu controlador/tabla
                 post_id: currentPostId, 
                 user_id: user.id, 
-                username: user.username, // Tu tabla pide el username
-                texto: texto             // En la base de datos se llama 'texto'
+                username: user.username,
+                texto: texto             
             })
         });
 

@@ -88,7 +88,6 @@ router.post('/crear', upload.single('image'), async (req, res) => {
     }
 });
 
-// ... (tota la part inicial de multer i get queda IGUAL)
 
 // 5. DAR O QUITAR LIKE (Actualizado con Notificación)
 router.post('/:id/like', async (req, res) => {
@@ -154,7 +153,6 @@ router.get('/:userId', async (req, res) => {
 // --- GESTIÓN DE COMENTARIOS ---
 
 // 1. OBTENER COMENTARIOS DE UN POST
-// Cambiamos 'app.get' por 'router.get'
 router.get('/comentarios/:post_id', async (req, res) => {
     const { post_id } = req.params;
     try {

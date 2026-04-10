@@ -19,7 +19,6 @@ const uploadsPath = path.join(__dirname, 'public', 'uploads');
 app.use(express.static(publicPath));
 
 // 2. Servir la carpeta de uploads con el prefijo /uploads
-// Esto hace que http://localhost:3650/uploads/archivo.jpg funcione
 app.use('/uploads', express.static(uploadsPath));
 
 // 4. IMPORTAR RUTAS EXTERNAS

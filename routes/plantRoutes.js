@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../data/db'); // Ajusta la ruta a tu conexión de BD
+const db = require('../data/db');
 const multer = require('multer');
 const path = require('path');
 

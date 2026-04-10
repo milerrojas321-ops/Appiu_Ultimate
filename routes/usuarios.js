@@ -2,7 +2,21 @@ const express = require('express');
 const router = express.Router();
 const db = require('../data/db');
 const multer = require('multer'); 
-const path = require('path');     
+const path = require('path');  
+const userController = require('../controllers/userController');
+const verificarToken = require('../middlewares/auth'); // El guardia
+
+console.log("¿Existe verificarToken?:", typeof verificarToken);
+console.log("¿Existe la función del controlador?:", typeof userController.obtenerSugerencias);
+console.log("Controlador:", userController);
+console.log("Función login:", userController.login);
+
+// Ruta pública (nadie tiene token aún)
+router.post('/login', userController.login);
+
+// Rutas protegidas (solo pasan si traen el token)
+router.get('/sugerencias/:idLogueado', verificarToken, userController.obtenerSugerencias);
+router.get('/notificaciones', verificarToken, userController.obtenerNotificaciones);   
 
 const storage = multer.diskStorage({
     destination: 'public/uploads/', 
@@ -12,8 +26,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage }); 
 
-// --- RUTA DE REGISTRO (CORREGIDA) ---
-// Agregamos upload.single para que req.body deje de ser undefined
+// --- RUTA DE REGISTRO 
 router.post('/registro', upload.single('foto_perfil'), async (req, res) => {
     try {
         const { username, email, password, expert_bio } = req.body;
@@ -28,7 +41,6 @@ router.post('/registro', upload.single('foto_perfil'), async (req, res) => {
         const isExpert = expert_bio ? 1 : 0;
         const fotoUrl = foto ? `/uploads/${foto.filename}` : null;
 
-        // IMPORTANTE: Asegúrate que los nombres de las columnas coincidan con tu BD (users o usuarios)
         const query = 'INSERT INTO users (username, email, password, is_expert, expert_bio, foto_perfil) VALUES (?, ?, ?, ?, ?, ?)';
         
         await db.query(query, [username, email, password, isExpert, expert_bio || null, fotoUrl]);
@@ -73,28 +85,6 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// --- RUTA DE LOGIN ---
-router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        const [rows] = await db.query(
-            'SELECT id, username, email, is_expert, foto_perfil FROM users WHERE (username = ? OR email = ?) AND password = ?', 
-            [username, username, password]
-        );
-
-        if (rows.length > 0) {
-            res.json({ success: true, user: rows[0] });
-        } else {
-            res.status(401).json({ success: false, message: 'Usuario o contraseña incorrectos' });
-        }
-    } catch (error) {
-        console.error("Error en el login:", error);
-        res.status(500).json({ success: false, message: 'Error interno del servidor' });
-    }
-});
-
-
-
 // --- CONTADORES ---
 router.get('/contadores/:id', async (req, res) => {
     const id = req.params.id;
@@ -126,7 +116,6 @@ router.post('/actualizar', upload.single('fotoPerfil'), async (req, res) => {
     }
 });
 
-// routes/publicaciones.js
 // Obtener publicaciones de un usuario específico para su perfil
 router.get('/usuario/:id', async (req, res) => {
     const userId = req.params.id;
@@ -224,24 +213,6 @@ router.post('/follow', async (req, res) => {
         console.error("ERROR EN TOGGLE FOLLOW:", error);
         res.status(500).json({ success: false, error: error.message });
     }
-});
-
-// --- RUTA: SUGERENCIAS ---
-router.get('/sugerencias/:idLogueado', async (req, res) => {
-    const idLogueado = req.params.idLogueado;
-    try {
-        const query = `
-            SELECT id, username, foto_perfil, 
-            (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = ? AND id_seguido = u.id) as loSigo
-            FROM users u WHERE id != ? ORDER BY RAND() LIMIT 5`;
-        const [rows] = await db.query(query, [idLogueado, idLogueado]);
-        
-        const procesados = rows.map(u => ({
-            ...u,
-            foto_perfil: u.foto_perfil ? (u.foto_perfil.startsWith('/') ? u.foto_perfil : `/uploads/${u.foto_perfil}`) : '/img/icono.jpg'
-        }));
-        res.json(procesados);
-    } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 // --- RUTA: NOTIFICACIONES ---
