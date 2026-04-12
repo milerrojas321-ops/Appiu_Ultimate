@@ -119,22 +119,19 @@ const getPublicProfile = async (req, res) => {
 };
 
 // Dentro de controllers/userController.js, antes del module.exports
-
 const obtenerSugerencias = async (req, res) => {
     const { idLogueado } = req.params;
+    console.log("ID que llega al servidor:", idLogueado); 
+
     try {
-        // Buscamos usuarios que NO sea el logueado y a los que NO siga aún
-        const sql = `
-            SELECT id, username, foto_perfil, is_expert 
-            FROM users 
-            WHERE id != ? 
-            AND id NOT IN (SELECT id_seguido FROM seguidores WHERE id_seguidor = ?)
-            LIMIT 5`;
+        const sql = `SELECT id, username, foto_perfil FROM users WHERE id != ?`; 
+        const [rows] = await db.query(sql, [idLogueado]);
         
-        const [rows] = await db.query(sql, [idLogueado, idLogueado]);
+        console.log("¿Cuántos usuarios encontró la DB?:", rows.length); // <--- MIRA ESTO EN LA TERMINAL
         res.json(rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error en SQL:", error);
+        res.status(500).json({ error: "Error interno" });
     }
 };
 

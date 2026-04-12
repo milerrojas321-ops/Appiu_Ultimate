@@ -13,9 +13,16 @@ console.log("Función login:", userController.login);
 
 // Ruta pública (nadie tiene token aún)
 router.post('/login', userController.login);
+router.get('/sugerencias/:idLogueado', async (req, res) => {
+    // Aquí puedes pegar la lógica de sugerencias que tenías
+    const idLogueado = req.params.idLogueado;
+    const [rows] = await require('../data/db').query("SELECT id, username, foto_perfil FROM users WHERE id != ? ORDER BY RAND() LIMIT 5", [idLogueado]);
+    res.json(rows);
+});
+// En tu archivo de rutas del backend
+router.get('/perfil-completo/:idLogueado/:perfilId', userController.getPublicProfile);
 
 // Rutas protegidas (solo pasan si traen el token)
-router.get('/sugerencias/:idLogueado', verificarToken, userController.obtenerSugerencias);
 router.get('/notificaciones', verificarToken, userController.obtenerNotificaciones);   
 
 const storage = multer.diskStorage({
@@ -226,6 +233,29 @@ router.get('/notificaciones/:userId', async (req, res) => {
         const [rows] = await db.query(sql, [req.params.userId]);
         res.json(rows);
     } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Ruta de sugerencias "estilo Notificaciones" (Sin token para que no te falle)
+router.get('/sugerencias/:idLogueado', async (req, res) => {
+    try {
+        const idLogueado = req.params.idLogueado;
+        
+        // Esta consulta es la clave: 
+        // 1. Trae usuarios que no seas tú.
+        // 2. Crea una columna 'loSigo' que vale 1 si ya lo sigues, o 0 si no.
+        const sql = `
+            SELECT u.id, u.username, u.foto_perfil, 
+            (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = ? AND id_seguido = u.id) as loSigo
+            FROM users u 
+            WHERE u.id != ? 
+            HAVING loSigo = 0 
+            ORDER BY RAND() LIMIT 5`;
+            
+        const [rows] = await db.query(sql, [idLogueado, idLogueado]);
+        res.json(rows);
+    } catch (error) { 
+        res.status(500).json({ error: error.message }); 
+    }
 });
 
 module.exports = router;

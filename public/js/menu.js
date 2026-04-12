@@ -116,51 +116,78 @@ async function cargarFeed() {
 }
 
 async function cargarSugerencias() {
-    // 1. Obtenemos los datos que guardaste al loguearte
-    const idLogueado = localStorage.getItem('userId'); 
-    const token = localStorage.getItem('token'); 
+    const lista = document.getElementById("lista-sugerencias");
+    const userLocal = JSON.parse(localStorage.getItem("user"));
 
-    if (!idLogueado || !token) return;
+    if (!lista || !userLocal || !userLocal.id) return;
 
     try {
-        // 2. Llamamos a la ruta que ya probamos en el navegador
-        const response = await fetch(`/api/usuarios/sugerencias/${idLogueado}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`, // El "pase" para el guardia 'verificarToken'
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const usuarios = await response.json();
+        // 1. Asegúrate de que esta ruta coincida con tu archivo userRoutes.js
+        const res = await fetch(`/api/usuarios/sugerencias/${userLocal.id}`);
         
-        // 3. Buscamos el lugar en tu HTML donde van las sugerencias
-        // Asegúrate de que en tu HTML tengas un div con id="lista-sugerencias"
-        const contenedor = document.getElementById('lista-sugerencias');
-        if (!contenedor) return;
+        if (!res.ok) throw new Error("Error en la respuesta del servidor");
 
-        // 4. Limpiamos y dibujamos los usuarios
+        const usuarios = await res.json();
+        lista.innerHTML = ""; 
+
         if (usuarios.length === 0) {
-            contenedor.innerHTML = '<p>No hay sugerencias nuevas 🌿</p>';
+            lista.innerHTML = "<p style='padding:10px; font-size:12px; color:#666;'>No hay sugerencias nuevas</p>";
             return;
         }
 
-        contenedor.innerHTML = usuarios.map(u => `
-            <div class="sugerencia-item">
-                <img src="${u.foto_perfil}" alt="${u.username}" style="width:50px; border-radius:50%;">
-                <span>${u.username}</span>
-                <button onclick="seguirUsuario(${u.id})">Seguir</button>
-            </div>
-        `).join('');
+        usuarios.forEach(u => {
+            // Lógica de imagen
+            let fotoFinal = u.foto_perfil;
+            if (fotoFinal && !fotoFinal.startsWith('http') && !fotoFinal.startsWith('/')) {
+                fotoFinal = `/uploads/${fotoFinal}`;
+            }
+            const imagen = fotoFinal || '/img/icono.jpg';
 
-    } catch (error) {
-        console.error("Error al cargar sugerencias:", error);
+            // Lógica de botón de seguimiento
+            const loSigo = u.loSigo > 0; 
+            const textoBoton = loSigo ? "Siguiendo" : "Seguir";
+            const claseBoton = loSigo ? "btn-follow btn-followed" : "btn-follow";
+
+            // CONSTRUCCIÓN DEL HTML
+            lista.innerHTML += `
+                <div class="user-suggest" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    
+                    <div class="user-suggest-info" onclick="verPerfil(${u.id})" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <img src="${imagen}" 
+                             alt="${u.username}" 
+                             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" 
+                             onerror="this.src='/img/icono.jpg'">
+                        <div style="display: flex; flex-direction: column;">
+                            <b style="font-size: 0.9em;">${u.username}</b>
+                            <span style="font-size: 0.7em; color: #888;">Sugerencia</span>
+                        </div>
+                    </div>
+
+                    <button class="${claseBoton}" onclick="followUser(event, ${u.id})">
+                        ${textoBoton}
+                    </button>
+                </div>`;
+        });
+    } catch (e) {
+        console.error("Error en cargarSugerencias:", e);
+    }
+}
+
+// ESTA FUNCIÓN DEBE ESTAR EN menu.js
+function verPerfil(userId) {
+    const userLocal = JSON.parse(localStorage.getItem("user"));
+    if (!userId) return;
+
+    // Si hago clic en mí mismo, voy a perfil.html. Si no, a perfil-usuario.html
+    if (userLocal && Number(userId) === Number(userLocal.id)) {
+        window.location.href = "perfil.html";
+    } else {
+        window.location.href = `perfil-usuario.html?id=${userId}`;
     }
 }
 
 // 5. Esto hace que la función corra apenas abra la página
 document.addEventListener('DOMContentLoaded', cargarSugerencias);
-
 
 async function cargarNotificaciones() {
     const contenedor = document.getElementById('lista-notificaciones');
@@ -169,7 +196,12 @@ async function cargarNotificaciones() {
 
     try {
         // 1. URL corregida con el prefijo /api/usuarios
-        const res = await fetch(`/api/usuarios/notificaciones/${user.id}`);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/usuarios/notificaciones/${user.id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         
         // 2. Validación de respuesta para evitar error de "Unexpected token <"
         if (!res.ok) {
