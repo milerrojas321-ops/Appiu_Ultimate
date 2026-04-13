@@ -6,20 +6,22 @@ const multer = require('multer');
 const app = express();
 const PORT = 3650;
 
+
 // 1. CONFIGURACIÓN DE MIDDLEWARES
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
 
 
-
 const publicPath = path.join(__dirname, 'public');
 const uploadsPath = path.join(__dirname, 'public', 'uploads');
 
+
+// Si tus imágenes están en public/img, añade también:
+app.use('/img', express.static('public/img'));
+
 // 1. Servir archivos de la raíz de public (HTML, CSS, JS)
 app.use(express.static(publicPath));
-
-// 2. Servir la carpeta de uploads con el prefijo /uploads
-app.use('/uploads', express.static(uploadsPath));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 4. IMPORTAR RUTAS EXTERNAS
 const publicacionesRoutes = require('./routes/publicaciones'); 

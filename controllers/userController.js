@@ -1,151 +1,78 @@
-const db = require('../data/db'); // Esta es la línea que te faltaba
+const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 
 
-const login = async (req, res) => {
-    // Intentamos sacar el dato tanto si viene como 'email' o como 'username'
-    const identificador = req.body.email || req.body.username;
-    const password = req.body.password;
-
+// Función para obtener el perfil básico por ID
+exports.getUserById = async (req, res) => {
     try {
-        // Buscamos en ambas columnas de la DB usando el mismo dato
-        const [rows] = await db.query(
-            'SELECT * FROM users WHERE email = ? OR username = ?', 
-            [identificador, identificador]
-        );
-
-        console.log("Dato recibido del formulario:", identificador);
-        console.log("¿Se encontró algo en la DB?:", rows.length > 0 ? "SÍ" : "NO");
-
-        // ... resto de tu código de validación
-
-        if (rows.length > 0) {
-            console.log("Usuario de la DB:", rows[0].username);
-            console.log("Password de la DB:", rows[0].password);
-            console.log("Password del Formulario:", password);
-            
-            const user = rows[0];
-
-            // TERCERO: Verificamos la contraseña
-            if (user.password !== password) { 
-                return res.status(401).json({ error: "Contraseña incorrecta" });
-            }
-
-            // CUARTO: Generamos el Token
-            const token = jwt.sign(
-                { id: user.id, username: user.username }, 
-                process.env.JWT_SECRET, 
-                { expiresIn: '2h' }
-            );
-
-            return res.json({ 
-                success: true,
-                token: token, 
-                user: { id: user.id, username: user.username } 
-            });
+        const user = await User.findById(req.params.id);
+        
+        if (user) {
+            // Enviamos el JSON que el frontend espera
+            res.json(user); 
         } else {
-            return res.status(401).json({ error: "Usuario o correo no encontrado" });
+            res.status(404).json({ error: "Usuario no existe" });
         }
-
     } catch (error) {
-        console.error("Error en login:", error);
+        console.error("Error en getUserById:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 };
 
-// RUTA: /api/usuarios/actualizar/:id
-const updateProfile = async (req, res) => {
-    const userId = req.params.id;
-    const { username, expert_bio } = req.body; 
-    const foto = req.file ? `/uploads/${req.file.filename}` : null;
+exports.getPublicProfile = async (req, res) => {
+    const { idLogueado, perfilId } = req.params;
 
     try {
-        if (foto) {
-            // 1. Actualiza el usuario
-            await db.query("UPDATE users SET username = ?, expert_bio = ?, foto_perfil = ? WHERE id = ?", [username, expert_bio, foto, userId]);
-            // 2. Sincroniza la foto en todas sus publicaciones antiguas
-            await db.query("UPDATE posts SET user_pfp = ? WHERE user_id = ?", [foto, userId]); 
-        } else {
-            await db.query("UPDATE users SET username = ?, expert_bio = ? WHERE id = ?", [username, expert_bio, userId]);
-        }
-        // 3. Sincroniza el nombre en los posts siempre
-        await db.query("UPDATE posts SET user_name = ? WHERE user_id = ?", [username, userId]);
+        const data = await User.getPublicProfileData(idLogueado, perfilId);
 
-        res.json({ success: true, message: "¡Perfil y publicaciones sincronizados! 🌿" });
+        if (!data) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        res.json(data);
     } catch (error) {
+        console.error("Error en getPublicProfile:", error);
         res.status(500).json({ error: error.message });
     }
 };
 
-// RUTA: /api/usuarios/follow
-const toggleFollow = async (req, res) => {
-    const { seguidor_id, seguido_id } = req.body;
-    
-    // Validación de seguridad: no puedes seguirte a ti mismo
-    if (seguidor_id === seguido_id) {
-        return res.status(400).json({ error: "No puedes seguirte a ti mismo" });
-    }
+// Lógica de Registro
+exports.registro = async (req, res) => {
     try {
-        const [existe] = await db.query('SELECT * FROM seguidores WHERE id_seguidor = ? AND id_seguido = ?', [seguidor_id, seguido_id]);
-        if (existe.length > 0) {
-            await db.query('DELETE FROM seguidores WHERE id_seguidor = ? AND id_seguido = ?', [seguidor_id, seguido_id]);
-            res.json({ action: 'unfollowed', success: true });
-        } else {
-            await db.query('INSERT INTO seguidores (id_seguidor, id_seguido) VALUES (?, ?)', [seguidor_id, seguido_id]);
-            // Notificación
-            await db.query("INSERT INTO notificaciones (id_receptor, id_emisor, tipo, leido) VALUES (?, ?, ?, ?)", 
-                          [seguido_id, seguidor_id, 'follow', false]);
-            res.json({ action: 'followed', success: true });
-        }
-    } catch (e) { res.status(500).json({ error: e.message }); }
-};
-
-// Perfil completo externo
-const getPublicProfile = async (req, res) => {
-    const { idLogueado, perfilId } = req.params;
-    try {
-        const sqlUser = `
-            SELECT u.id, u.username, u.expert_bio AS biografia, u.foto_perfil, u.is_expert,
-            (SELECT COUNT(*) FROM seguidores WHERE id_seguido = u.id) AS seguidores_count,
-            (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = u.id) AS seguidos_count,
-            (SELECT COUNT(*) FROM seguidores WHERE id_seguidor = ? AND id_seguido = u.id) AS loSigo
-            FROM users u WHERE u.id = ?`;
-        const [userRows] = await db.query(sqlUser, [idLogueado, perfilId]);
-        if (userRows.length === 0) return res.status(404).json({ error: "No existe" });
-
-        const [postRows] = await db.query('SELECT * FROM posts WHERE user_id = ? ORDER BY id DESC', [perfilId]);
-        res.json({ usuario: userRows[0], publicaciones: postRows });
-    } catch (error) { res.status(500).json({ error: error.message }); }
-};
-
-// Dentro de controllers/userController.js, antes del module.exports
-const obtenerSugerencias = async (req, res) => {
-    const { idLogueado } = req.params;
-    console.log("ID que llega al servidor:", idLogueado); 
-
-    try {
-        const sql = `SELECT id, username, foto_perfil FROM users WHERE id != ?`; 
-        const [rows] = await db.query(sql, [idLogueado]);
-        
-        console.log("¿Cuántos usuarios encontró la DB?:", rows.length); // <--- MIRA ESTO EN LA TERMINAL
-        res.json(rows);
+        const { username, email, password, expert_bio } = req.body;
+        const userData = {
+            username, email, password,
+            isExpert: expert_bio ? 1 : 0,
+            expertBio: expert_bio || null,
+            fotoUrl: req.file ? `/uploads/${req.file.filename}` : null
+        };
+        await User.create(userData);
+        res.status(201).json({ success: true, message: "Registrado con éxito 🌿" });
     } catch (error) {
-        console.error("Error en SQL:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Lógica de Login
+exports.login = async (req, res) => {
+    const identificador = req.body.email || req.body.username;
+    const { password } = req.body;
+    try {
+        const user = await User.findByEmailOrUsername(identificador);
+        if (!user || user.password !== password) {
+            return res.status(401).json({ error: "Credenciales incorrectas" });
+        }
+        const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '2h' });
+        res.json({ success: true, token, user: { id: user.id, username: user.username } });
+    } catch (error) {
         res.status(500).json({ error: "Error interno" });
     }
 };
 
-const obtenerNotificaciones = async (req, res) => {
-    const { userId } = req.params; // O usa req.userId si ya vienes del middleware
+// Obtener Sugerencias
+exports.obtenerSugerencias = async (req, res) => {
     try {
-        const sql = `
-            SELECT n.*, u.username, u.foto_perfil 
-            FROM notificaciones n
-            JOIN users u ON n.id_emisor = u.id
-            WHERE n.id_receptor = ?
-            ORDER BY n.fecha DESC LIMIT 20`;
-        
-        const [rows] = await db.query(sql, [userId]);
+        const rows = await User.getSuggestions(req.params.idLogueado);
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -153,11 +80,89 @@ const obtenerNotificaciones = async (req, res) => {
 };
 
 
-module.exports = {
-    login,
-    updateProfile,
-    toggleFollow,
-    getPublicProfile,
-    obtenerSugerencias,
-    obtenerNotificaciones // <--- ¡Añade esta!
+//seguir o dejar de seguir a un usuario
+exports.toggleFollow = async (req, res) => {
+    // 1. Capturamos todas las posibles variantes de nombres que envía el frontend
+    const { seguidor_id, seguido_id, idSeguidor, idSeguido } = req.body;
+    
+    // 2. Normalizamos los IDs para usar siempre la misma variable
+    const final_seguidor = seguidor_id || idSeguidor;
+    const final_seguido = seguido_id || idSeguido;
+
+    // 3. Validación de seguridad (no seguirse a sí mismo)
+    if (final_seguidor == final_seguido) {
+        return res.status(400).json({ error: "No puedes seguirte a ti mismo" });
+    }
+
+    // 4. Validación de existencia de datos
+    if (!final_seguidor || !final_seguido) {
+        return res.status(400).json({ error: "Faltan IDs de usuario para completar la acción" });
+    }
+
+    try {
+        // 5. Llamamos al modelo con los IDs ya limpios
+        const result = await User.toggleFollow(final_seguidor, final_seguido);
+        
+        // 6. Respondemos al frontend
+        res.json({ 
+            success: true, 
+            action: result.action // Esto devolverá 'followed' o 'unfollowed'
+        });
+    } catch (error) {
+        console.error("Error en toggleFollow:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// Actualizar Perfil (Lógica de negocio + Sincronización)
+exports.actualizarPerfil = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre_completo, username, expert_bio } = req.body;
+        
+        // Si Multer procesó una foto, usamos el nombre; si no, null
+        const foto_perfil = req.file ? req.file.filename : null;
+
+        await User.updateProfile(id, { 
+            nombre_completo, 
+            username, 
+            expert_bio, 
+            foto_perfil 
+        });
+
+        res.json({ success: true, message: "¡Perfil actualizado!" });
+    } catch (error) {
+        console.error("ERROR EN EL CONTROLADOR:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// Obtener Notificaciones
+exports.obtenerNotificaciones = async (req, res) => {
+    try {
+        const userId = req.params.userId || req.userId;
+        const rows = await User.getNotifications(userId);
+
+        const notificacionesFormateadas = rows.map(nota => {
+            // Verificamos si la foto existe
+            let fotoFinal = '/img/default-avatar.png'; // Imagen por defecto
+            
+            if (nota.foto_perfil) {
+                // Si la foto ya empieza con /uploads, la dejamos igual
+                // Si no, le ponemos el prefijo una SOLA vez
+                fotoFinal = nota.foto_perfil.startsWith('/uploads') 
+                    ? nota.foto_perfil 
+                    : `/uploads/${nota.foto_perfil}`;
+            }
+
+            return {
+                ...nota,
+                foto_perfil: fotoFinal
+            };
+        });
+
+        res.json(notificacionesFormateadas);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };

@@ -1,40 +1,75 @@
-const db = require('../data/db');
+const Post = require('../models/postModel');
 
-// Función para obtener el feed
 exports.getFeed = async (req, res) => {
     try {
-        const sql = `
-            SELECT p.*, u.foto_perfil as user_pfp, u.username as user_name,
-            (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id AND user_id = ?) as loLikeo
-            FROM posts p 
-            JOIN users u ON p.user_id = u.id 
-            ORDER BY p.created_at DESC`;
-        const [rows] = await db.query(sql, [req.params.userId]);
+        const rows = await Post.getAll(req.params.userId);
+        
+        // MAPEAMOS para agregar los prefijos /uploads/
+        const rowsFormateadas = rows.map(post => {
+            return {
+                ...post,
+                // Foto de la planta
+                image_url: post.image_url 
+                    ? (post.image_url.startsWith('/') ? post.image_url : `/uploads/${post.image_url}`) 
+                    : null,
+                // Foto de perfil del autor (user_pfp)
+                user_pfp: post.user_pfp 
+                    ? (post.user_pfp.startsWith('/') ? post.user_pfp : `/uploads/${post.user_pfp}`) 
+                    : '/img/default-avatar.png' // Imagen por defecto si no tiene
+            };
+        });
+
+        res.json(rowsFormateadas);
+    } catch (error) {
+        console.error("Error al formatear feed:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getUserPosts = async (req, res) => {
+    try {
+        const rows = await Post.getByUserId(req.params.id);
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-// Función para comentarios estilo TikTok
-exports.getComments = async (req, res) => {
-    const postId = req.params.id;
+exports.createPost = async (req, res) => {
     try {
-        const sql = "SELECT c.*, u.username, u.foto_perfil FROM comentarios c LEFT JOIN users u ON c.user_id = u.id WHERE c.post_id = ? ORDER BY c.id ASC";
-        const [rows] = await db.query(sql, [postId]);
-        res.json(rows); 
+        const { user_id, username, content, plant_name } = req.body;
+        const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+        await Post.create({ user_id, username, content, image_url, plant_name });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.handleLike = async (req, res) => {
+    try {
+        const result = await Post.toggleLike(req.params.id, req.body.user_id);
+        res.json({ success: true, ...result });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.getPostComments = async (req, res) => {
+    try {
+        const rows = await Post.getComments(req.params.id);
+        res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-exports.addComment = async (req, res) => {
-    const { usuario_id, publicacion_id, contenido } = req.body;
+exports.saveComment = async (req, res) => {
     try {
-        const sql = "INSERT INTO comentarios (post_id, user_id, texto) VALUES (?, ?, ?)";
-        await db.query(sql, [publicacion_id, usuario_id, contenido]);
-        res.json({ success: true, message: "Comentario publicado" });
+        const { post_id, user_id, username, texto } = req.body;
+        await Post.addComment(post_id, user_id, username, texto);
+        res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };

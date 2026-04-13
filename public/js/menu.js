@@ -12,34 +12,22 @@ async function sincronizarUsuario() {
         const datosActualizados = await res.json();
 
         if (datosActualizados && !datosActualizados.error) {
-            // Actualizamos el localStorage con la info real de la DB
             localStorage.setItem("user", JSON.stringify(datosActualizados));
-            
-            // Actualizamos la UI
             document.getElementById("mini-username").innerText = `@${datosActualizados.username}`;
             
-            let foto = datosActualizados.foto_perfil;
-            if (foto && !foto.startsWith('/') && !foto.startsWith('http')) foto = `/uploads/${foto}`;
-            document.getElementById("mini-pfp").src = foto || `https://api.dicebear.com/7.x/bottts/svg?seed=${datosActualizados.username}`;
+            // El controlador ya debe enviar la foto procesada
+            document.getElementById("mini-pfp").src = datosActualizados.foto_perfil || ICONO_DEFECTO;
         }
     } catch (e) {
         console.error("Error al sincronizar usuario:", e);
     }
 }
 
-// Llama a esta función al final de tu inicialización
 sincronizarUsuario();
 
 if (user) {
-    let fotoUrl = user.foto_perfil;
-    if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('/uploads')) {
-        fotoUrl = `/uploads/${fotoUrl}`;
-    }
-    
-    document.getElementById("mini-pfp").src = fotoUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}`;
+    document.getElementById("mini-pfp").src = user.foto_perfil || ICONO_DEFECTO;
 }
-    
-
 
 // --- FUNCIONES DE INTERFAZ ---
 function openModal() { document.getElementById('modalPost').classList.add('open'); }
@@ -65,32 +53,23 @@ async function cargarFeed() {
         }
 
         posts.forEach(post => {
-            // 1. Prioridad: Datos del JOIN -> Datos del post -> "Usuario"
-            const nombreAutor = post.nombre_real || post.username || "Usuario";
-
-            // 2. Lógica de la Foto de Perfil
-            let fotoAutor = post.foto_real || post.foto_perfil;
-            if (fotoAutor && !fotoAutor.startsWith('http') && !fotoAutor.startsWith('/')) {
-                fotoAutor = `/uploads/${fotoAutor}`;
-            }
-            
-            // Si tiene foto la usa, si no, usa el icono local (sin robots aleatorios)
-            const imgFinal = fotoAutor ? fotoAutor : '/img/icono.jpg'; 
+            // USAMOS LAS VARIABLES QUE ENVÍA EL CONTROLADOR (ya vienen con /uploads/)
+            const imgFinal = post.user_pfp || ICONO_DEFECTO; 
             const claseLikeIcon = post.loLikeo > 0 ? "fa-solid active-like" : "fa-regular";
 
             feed.innerHTML += `
             <article class="post-card" id="post-${post.id}">
                 <div class="post-header" onclick="verPerfil(${post.user_id})" style="cursor:pointer;">
-                    <img src="${imgFinal}" class="user-pfp" alt="${nombreAutor}">
+                    <img src="${imgFinal}" class="user-pfp" onerror="this.src='${ICONO_DEFECTO}'">
                     <div>
-                        <b style="font-size:0.95rem; color:var(--text);">${nombreAutor}</b>
+                        <b style="font-size:0.95rem; color:var(--text);">${post.user_name}</b>
                         <small style="color:var(--text-light); display:block; font-size:0.75rem; margin-top:2px;">
                             ${new Date(post.created_at).toLocaleDateString()}
                         </small>
                     </div>
                 </div>
                 <div class="post-image-container">
-                    <img src="${post.image_url}" class="post-image">
+                    <img src="${post.image_url}" class="post-image" onerror="this.style.display='none'">
                 </div>
                 <div class="post-body">
                     <h4 style="color:var(--primary); font-weight:800;">🌿 ${post.plant_name}</h4>
@@ -117,132 +96,51 @@ async function cargarFeed() {
 
 async function cargarSugerencias() {
     const lista = document.getElementById("lista-sugerencias");
-    const userLocal = JSON.parse(localStorage.getItem("user"));
-
-    if (!lista || !userLocal || !userLocal.id) return;
+    if (!lista || !user) return;
 
     try {
-        // 1. Asegúrate de que esta ruta coincida con tu archivo userRoutes.js
-        const res = await fetch(`/api/usuarios/sugerencias/${userLocal.id}`);
-        
-        if (!res.ok) throw new Error("Error en la respuesta del servidor");
-
+        const res = await fetch(`/api/usuarios/sugerencias/${user.id}`);
         const usuarios = await res.json();
         lista.innerHTML = ""; 
 
-        if (usuarios.length === 0) {
-            lista.innerHTML = "<p style='padding:10px; font-size:12px; color:#666;'>No hay sugerencias nuevas</p>";
-            return;
-        }
-
         usuarios.forEach(u => {
-            // Lógica de imagen
-            let fotoFinal = u.foto_perfil;
-            if (fotoFinal && !fotoFinal.startsWith('http') && !fotoFinal.startsWith('/')) {
-                fotoFinal = `/uploads/${fotoFinal}`;
-            }
-            const imagen = fotoFinal || '/img/icono.jpg';
+            const imagen = u.foto_perfil || ICONO_DEFECTO;
+            const textoBoton = u.loSigo > 0 ? "Siguiendo" : "Seguir";
+            const claseBoton = u.loSigo > 0 ? "btn-follow btn-followed" : "btn-follow";
 
-            // Lógica de botón de seguimiento
-            const loSigo = u.loSigo > 0; 
-            const textoBoton = loSigo ? "Siguiendo" : "Seguir";
-            const claseBoton = loSigo ? "btn-follow btn-followed" : "btn-follow";
-
-            // CONSTRUCCIÓN DEL HTML
             lista.innerHTML += `
                 <div class="user-suggest" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                    
                     <div class="user-suggest-info" onclick="verPerfil(${u.id})" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <img src="${imagen}" 
-                             alt="${u.username}" 
-                             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" 
-                             onerror="this.src='/img/icono.jpg'">
+                        <img src="${imagen}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="this.src='${ICONO_DEFECTO}'">
                         <div style="display: flex; flex-direction: column;">
                             <b style="font-size: 0.9em;">${u.username}</b>
                             <span style="font-size: 0.7em; color: #888;">Sugerencia</span>
                         </div>
                     </div>
-
-                    <button class="${claseBoton}" onclick="followUser(event, ${u.id})">
-                        ${textoBoton}
-                    </button>
+                    <button class="${claseBoton}" onclick="followUser(event, ${u.id})">${textoBoton}</button>
                 </div>`;
         });
-    } catch (e) {
-        console.error("Error en cargarSugerencias:", e);
-    }
+    } catch (e) { console.error("Error en sugerencias:", e); }
 }
-
-// ESTA FUNCIÓN DEBE ESTAR EN menu.js
-function verPerfil(userId) {
-    const userLocal = JSON.parse(localStorage.getItem("user"));
-    if (!userId) return;
-
-    // Si hago clic en mí mismo, voy a perfil.html. Si no, a perfil-usuario.html
-    if (userLocal && Number(userId) === Number(userLocal.id)) {
-        window.location.href = "perfil.html";
-    } else {
-        window.location.href = `perfil-usuario.html?id=${userId}`;
-    }
-}
-
-// 5. Esto hace que la función corra apenas abra la página
-document.addEventListener('DOMContentLoaded', cargarSugerencias);
 
 async function cargarNotificaciones() {
     const contenedor = document.getElementById('lista-notificaciones');
-    // Validación de seguridad inicial
-    if (!contenedor || !user || !user.id) return;
+    if (!contenedor || !user) return;
 
     try {
-        // 1. URL corregida con el prefijo /api/usuarios
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/usuarios/notificaciones/${user.id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        // 2. Validación de respuesta para evitar error de "Unexpected token <"
-        if (!res.ok) {
-            console.warn("No se pudieron cargar las notificaciones:", res.status);
-            return;
-        }
+        const res = await fetch(`/api/usuarios/notificaciones/${user.id}`);
+        if (!res.ok) return;
 
         const notis = await res.json();
+        contenedor.innerHTML = notis.length === 0 ? `<p style="text-align:center; color:#bbb; padding:20px 0;">No hay actividad.</p>` : "";
 
-        if(notis.length === 0) {
-            contenedor.innerHTML = `<p style="text-align:center; color:#bbb; font-size:0.8rem; padding:20px 0;">No hay actividad nueva.</p>`;
-            return;
-        }
-
-        contenedor.innerHTML = "";
         notis.forEach(n => {
-            // 3. Gestión de imagen de perfil (Prioriza local -> Fallback icono)
-            let fotoEmi = n.foto_perfil;
-            if (fotoEmi && !fotoEmi.startsWith('http') && !fotoEmi.startsWith('/')) {
-                fotoEmi = `/uploads/${fotoEmi}`;
-            }
-            const fotoFinal = fotoEmi || '/img/icono.jpg';
-
-            let texto = "";
-            let iconoClass = "";
-            
-            // Lógica de tipos de notificación
-            if(n.tipo === 'like') { 
-                texto = "le dio me gusta a tu planta."; 
-                iconoClass = "fa-heart active-like"; 
-            } else if(n.tipo === 'comment') { 
-                texto = "comentó tu publicación."; 
-                iconoClass = "fa-comment"; 
-            } else if(n.tipo === 'follow') { 
-                texto = "comenzó a seguirte."; 
-                iconoClass = "fa-user-plus"; 
-            }
+            let texto = n.tipo === 'like' ? "le dio me gusta a tu planta." : n.tipo === 'comment' ? "comentó tu publicación." : "comenzó a seguirte.";
+            let iconoClass = n.tipo === 'like' ? "fa-heart active-like" : n.tipo === 'comment' ? "fa-comment" : "fa-user-plus";
 
             contenedor.innerHTML += `
                 <div class="noti-item">
-                    <img src="${fotoFinal}" class="noti-pfp" onerror="this.src='/img/icono.jpg'">
+                    <img src="${n.foto_perfil || ICONO_DEFECTO}" class="noti-pfp" onerror="this.src='${ICONO_DEFECTO}'">
                     <div class="noti-text">
                         <b>${n.nombre_emisor}</b> ${texto}
                         <span class="noti-time">${new Date(n.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
@@ -250,16 +148,12 @@ async function cargarNotificaciones() {
                     <i class="fa-solid ${iconoClass}" style="margin-left:auto; font-size:0.8rem;"></i>
                 </div>`;
         });
-    } catch (e) { 
-        console.error("Error en cargarNotificaciones:", e); 
-    }
+    } catch (e) { console.error(e); }
 }
 
-// --- EVENTOS Y OTROS ---
 async function darLike(event, postId) {
     const heartIcon = document.querySelector(`#post-${postId} .fa-heart`);
     const countSpan = document.getElementById(`count-${postId}`);
-
     try {
         const res = await fetch(`/api/publicaciones/${postId}/like`, {
             method: 'POST',
@@ -267,7 +161,6 @@ async function darLike(event, postId) {
             body: JSON.stringify({ user_id: user.id })
         });
         const data = await res.json();
-
         if (data.success) {
             if (data.action === 'added') {
                 heartIcon.classList.replace('fa-regular', 'fa-solid');
@@ -288,150 +181,105 @@ async function abrirComentarios(postId) {
     cargarComentarios(postId);
 }
 
-// menu.js
 async function cargarComentarios(postId) {
-    currentPostId = postId; 
     const list = document.getElementById('commentsList');
-    const panel = document.getElementById('commentsPanel');
-    
-    if (!list || !panel) return;
-    
-    panel.classList.add('active'); 
-    list.innerHTML = "<p style='text-align:center;'>Cargando comentarios...</p>";
-
     try {
-        
-        const res = await fetch(`/api/publicaciones/${postId}/comentarios`);
-        
-        if (!res.ok) throw new Error("Error en la respuesta");
-        
+        const res = await fetch(`/api/publicaciones/comentarios/${postId}`);
         const comments = await res.json();
-        list.innerHTML = "";
-
-        if (comments.length === 0) {
-            list.innerHTML = "<p style='text-align:center; color:#888; padding:20px;'>Aún no hay brotes en esta conversación. 🌱</p>";
-            return;
-        }
+        list.innerHTML = comments.length === 0 ? "<p style='text-align:center; color:#888; padding:20px;'>Aún no hay brotes. 🌱</p>" : "";
 
         comments.forEach(c => {
-           
-            let foto = c.foto_perfil ? (c.foto_perfil.startsWith('/') ? c.foto_perfil : `/uploads/${c.foto_perfil}`) : '/img/icono.jpg';
-
             list.innerHTML += `
-                <div style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start;">
-                    <img src="${foto}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;" 
-                        onerror="this.src='/img/icono.jpg'">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <img src="${c.foto_perfil || ICONO_DEFECTO}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">
                     <div style="background:#f0f2f5; padding:10px; border-radius:15px; flex:1;">
-                        <b style="font-size:0.85rem; color:green;">@${c.username || 'Usuario'}</b>
+                        <b style="font-size:0.85rem; color:green;">@${c.username}</b>
                         <p style="margin:2px 0 0 0; font-size:0.9rem;">${c.texto}</p>
                     </div>
                 </div>`;
         });
-        
-        list.scrollTop = list.scrollHeight;
-    } catch (e) {
-        console.error("Error al cargar:", e);
-        list.innerHTML = "<p style='text-align:center; color:red;'>Error al conectar con la raíz del servidor.</p>";
-    }
+    } catch (e) { console.error(e); }
 }
 
-// Añadimos 'event' como primer parámetro
-async function enviarComentario(event, btn) {
+async function enviarComentario() {
     const texto = document.getElementById('comment-text').value;
-    const user = JSON.parse(localStorage.getItem("user"));
-    
     if(!texto) return;
-
     try {
-        // 1. CAMBIO DE URL: Agregamos /publicaciones
         const res = await fetch('/api/publicaciones/comentarios', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                // 2. CAMBIO DE NOMBRES: Usamos los que espera tu controlador/tabla
-                post_id: currentPostId, 
-                user_id: user.id, 
-                username: user.username,
-                texto: texto             
-            })
+            body: JSON.stringify({ post_id: currentPostId, user_id: user.id, username: user.username, texto })
         });
-
         if (res.ok) {
             document.getElementById('comment-text').value = ""; 
-            // 3. CAMBIO DE URL EN CARGAR: También debe llevar /publicaciones
             cargarComentarios(currentPostId); 
-        } else {
-            console.error("Error en la respuesta del servidor");
         }
-    } catch (e) { 
-        console.error("Error en el fetch:", e); 
-    }
+    } catch (e) { console.error(e); }
 }
 
-document.getElementById('form-publicar').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.innerText = "Publicando..."; btn.disabled = true;
+// 1. Escuchar el evento submit del formulario
+document.getElementById('form-edit-perfil').addEventListener('submit', async (e) => {
+    e.preventDefault(); // Evita que la página se recargue
 
-    const formData = new FormData();
-    formData.append('user_id', user.id);
-    formData.append('username', user.username);
-    formData.append('plant_name', document.getElementById('plant-name').value);
-    formData.append('content', document.getElementById('post-content').value);
-    formData.append('image', document.getElementById('image-file').files[0]);
+    // 2. Crear el objeto FormData con los datos del formulario
+    const formData = new FormData(e.target); 
+    // Esto captura automáticamente: username, nombre_completo, expert_bio y la foto_perfil
 
     try {
-        await fetch('/api/publicaciones/crear', { method: 'POST', body: formData });
-        closeModal();
-        e.target.reset();
-        document.getElementById('file-name-display').innerText = "Ningún archivo seleccionado";
-        cargarFeed();
-    } catch(err) { console.error(err); }
-    finally { btn.innerText = "Publicar en el Feed"; btn.disabled = false; }
+        const response = await fetch(`/api/usuarios/${userLogueado.id}`, {
+            method: 'PUT',
+            body: formData 
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert("¡Perfil actualizado con éxito! 🌿");
+            
+            //Actualizar el localStorage para que los cambios se vean en toda la app
+            // Primero pedimos los datos frescos al servidor para estar seguros
+            const resActualizada = await fetch(`/api/usuarios/${userLogueado.id}`);
+            const nuevoUsuario = await resActualizada.json();
+            localStorage.setItem("user", JSON.stringify(nuevoUsuario));
+
+            //Refrescar la página para ver los cambios aplicados
+            window.location.reload();
+        } else {
+            alert("Error al actualizar: " + data.error);
+        }
+
+    } catch (error) {
+        console.error("Error en la petición:", error);
+        alert("Hubo un problema al conectar con el servidor.");
+    }
 });
 
 function verPerfil(userId) {
     if(!user || !userId) return;
-    window.location.href = (userId === user.id) ? "perfil.html" : `perfil-usuario.html?id=${userId}`;
+    window.location.href = (Number(userId) === Number(user.id)) ? "perfil.html" : `perfil-usuario.html?id=${userId}`;
 }
 
 async function followUser(event, seguidoId) {
-    // Evita que el click haga otras cosas (como abrir el perfil)
     if (event) event.stopPropagation();
-    
-    const btn = event.target;
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (!user) return alert("Debes iniciar sesión para seguir a alguien");
-
     try {
         const res = await fetch('/api/usuarios/follow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                seguidor_id: user.id, 
-                seguido_id: seguidoId 
-            })
+            body: JSON.stringify({ seguidor_id: user.id, seguido_id: seguidoId })
         });
-
         if (res.ok) {
             const data = await res.json();
-            if (data.action === 'followed') {
-                btn.innerText = "Siguiendo";
-                btn.classList.add("btn-followed");
-            } else {
-                btn.innerText = "Seguir";
-                btn.classList.remove("btn-followed");
-            }
+            event.target.innerText = data.action === 'followed' ? "Siguiendo" : "Seguir";
+            event.target.classList.toggle("btn-followed", data.action === 'followed');
         }
-    } catch (e) { 
-        console.error("Error en el follow:", e); 
-    }
+    } catch (e) { console.error(e); }
 }
 
 function logout() { localStorage.clear(); window.location.href = "login.html"; }
 
-// --- INICIALIZACIÓN ---
-cargarFeed();
-cargarSugerencias();
-cargarNotificaciones();
+// Inicialización
+document.addEventListener('DOMContentLoaded', () => {
+    cargarFeed();
+    cargarSugerencias();
+    cargarNotificaciones();
+});
