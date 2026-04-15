@@ -218,41 +218,39 @@ async function enviarComentario() {
 }
 
 // 1. Escuchar el evento submit del formulario
-document.getElementById('form-edit-perfil').addEventListener('submit', async (e) => {
-    e.preventDefault(); // Evita que la página se recargue
+// 1. Buscamos el formulario primero
+const formEditar = document.getElementById('form-edit-perfil');
 
-    // 2. Crear el objeto FormData con los datos del formulario
-    const formData = new FormData(e.target); 
-    // Esto captura automáticamente: username, nombre_completo, expert_bio y la foto_perfil
+// 2. Solo si el formulario existe (es decir, estamos en la página de editar perfil), ponemos el listener
+if (formEditar) {
+    formEditar.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    try {
-        const response = await fetch(`/api/usuarios/${userLogueado.id}`, {
-            method: 'PUT',
-            body: formData 
-        });
+        const formData = new FormData(e.target); 
 
-        const data = await response.json();
+        try {
+            const response = await fetch(`/api/usuarios/${userLogueado.id}`, {
+                method: 'PUT',
+                body: formData 
+            });
 
-        if (data.success) {
-            alert("¡Perfil actualizado con éxito! 🌿");
-            
-            //Actualizar el localStorage para que los cambios se vean en toda la app
-            // Primero pedimos los datos frescos al servidor para estar seguros
-            const resActualizada = await fetch(`/api/usuarios/${userLogueado.id}`);
-            const nuevoUsuario = await resActualizada.json();
-            localStorage.setItem("user", JSON.stringify(nuevoUsuario));
+            const data = await response.json();
 
-            //Refrescar la página para ver los cambios aplicados
-            window.location.reload();
-        } else {
-            alert("Error al actualizar: " + data.error);
+            if (data.success) {
+                alert("¡Perfil actualizado con éxito! 🌿");
+                const resActualizada = await fetch(`/api/usuarios/${userLogueado.id}`);
+                const nuevoUsuario = await resActualizada.json();
+                localStorage.setItem("user", JSON.stringify(nuevoUsuario));
+                window.location.reload();
+            } else {
+                alert("Error al actualizar: " + data.error);
+            }
+        } catch (error) {
+            console.error("Error en la petición:", error);
+            alert("Hubo un problema al conectar con el servidor.");
         }
-
-    } catch (error) {
-        console.error("Error en la petición:", error);
-        alert("Hubo un problema al conectar con el servidor.");
-    }
-});
+    });
+}
 
 function verPerfil(userId) {
     if(!user || !userId) return;
